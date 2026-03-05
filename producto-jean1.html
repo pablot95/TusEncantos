@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Jean Silueta Perfecta - Jean de mujer tiro alto con calce impecable. Boutique Tus Encantos.">
+    <meta name="keywords" content="jean mujer tiro alto, jean femenino, silueta perfecta, tus encantos, denim mujer">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Jean Silueta Perfecta | Tus Encantos">
+    <meta property="og:description" content="Jean tiro alto con calce impecable. Denim premium con elasticidad perfecta.">
+    <meta property="og:image" content="images/jean1.jpeg">
+    <meta name="theme-color" content="#F6AFCB">
+    <title>Jean Silueta Perfecta | Tus Encantos</title>
+    <link rel="icon" type="image/jpeg" href="images/logo.jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="product.css">
+</head>
+<body data-product-id="jean1" data-product-name="Jean Silueta Perfecta" data-product-price="22000" data-product-image="images/jean1.jpeg" data-product-category="Jeans">
+
+    <nav class="product-nav">
+        <div class="nav-inner">
+            <a href="index.html" class="back-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Volver
+            </a>
+            <a href="index.html" class="nav-logo">
+                <img src="images/logo.jpeg" alt="Tus Encantos" width="42" height="42">
+            </a>
+            <button class="nav-cart" aria-label="Carrito">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
+                <span class="nav-cart-count">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <div id="cart-drawer">
+        <div class="cart-header">
+            <h3>Tu Carrito</h3>
+            <button id="close-cart" aria-label="Cerrar carrito">✕</button>
+        </div>
+        <div id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total</span>
+                <span id="cart-total-price">$0</span>
+            </div>
+            <button class="btn-checkout">Finalizar Compra</button>
+        </div>
+    </div>
+    <div id="cart-overlay"></div>
+
+    <main class="product-page">
+        <div class="container">
+            <div class="product-detail">
+                <div class="product-gallery">
+                    <span class="badge">Más vendido</span>
+                    <img src="images/jean1.jpeg" alt="Jean Silueta Perfecta tiro alto mujer" width="600" height="750">
+                </div>
+                <div class="product-details">
+                    <div class="product-breadcrumb">
+                        <a href="index.html">Inicio</a> / <a href="index.html#coleccion">Colección</a> / Jeans
+                    </div>
+                    <h1>Jean Silueta Perfecta</h1>
+                    <span class="product-category-tag">Jeans</span>
+                    <p class="product-price-main">$22.000</p>
+                    <p class="product-installments">3 cuotas sin interés de $7.333</p>
+                    <p class="product-description">Jean tiro alto confeccionado con denim premium de alta elasticidad. Moldea la silueta sin perder comodidad. El corte perfecto que combina con todo tu guardarropa, desde una remera básica hasta un blazer.</p>
+                    <div class="size-selector">
+                        <label>Seleccioná tu talle</label>
+                        <div class="size-options">
+                            <button class="size-btn">34</button>
+                            <button class="size-btn">36</button>
+                            <button class="size-btn">38</button>
+                            <button class="size-btn">40</button>
+                            <button class="size-btn">42</button>
+                            <button class="size-btn">44</button>
+                        </div>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn-add-cart"><span>Agregar al Carrito</span></button>
+                        <button class="btn-buy-now"><span>Comprar Ahora</span></button>
+                    </div>
+                    <div class="product-features">
+                        <div class="product-feature">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6AFCB" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            Tiro alto
+                        </div>
+                        <div class="product-feature">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6AFCB" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            Denim premium
+                        </div>
+                        <div class="product-feature">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6AFCB" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                            Envío gratis
+                        </div>
+                        <div class="product-feature">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6AFCB" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Cambio sin costo
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section class="related-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>También te puede gustar</h2>
+            </div>
+            <div class="related-grid">
+                <a href="producto-jean2.html" class="related-card">
+                    <img src="images/jean2.jpeg" alt="Jean Essential Denim" width="300" height="375" loading="lazy">
+                    <div class="related-card-info">
+                        <h3>Jean Essential Denim</h3>
+                        <p>$21.500</p>
+                    </div>
+                </a>
+                <a href="producto-sweater1.html" class="related-card">
+                    <img src="images/sweater1.jpeg" alt="Sweater Nuage" width="300" height="375" loading="lazy">
+                    <div class="related-card-info">
+                        <h3>Sweater Nuage</h3>
+                        <p>$16.800</p>
+                    </div>
+                </a>
+                <a href="producto-chaleco.html" class="related-card">
+                    <img src="images/chaleco.jpeg" alt="Chaleco Atelier" width="300" height="375" loading="lazy">
+                    <div class="related-card-info">
+                        <h3>Chaleco Atelier</h3>
+                        <p>$14.500</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="product-footer">
+        <div class="container">
+            <p>&copy; 2026 Tus Encantos. Todos los derechos reservados.</p>
+            <p>Developed and designed by: <a href="https://gokywebs.net" target="_blank" rel="noopener noreferrer">Gokywebs</a></p>
+        </div>
+    </footer>
+
+    <script src="product.js"></script>
+</body>
+</html>
