@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#F6AFCB">
+    <title>Producto | Tus Encantos</title>
+    <link rel="icon" type="image/jpeg" href="images/logo.jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="product.css">
+</head>
+<body>
+
+    <nav class="product-nav">
+        <div class="nav-inner">
+            <a href="index.html" class="back-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Volver
+            </a>
+            <a href="index.html" class="nav-logo">
+                <img src="images/logo.jpeg" alt="Tus Encantos" width="42" height="42">
+            </a>
+            <button class="nav-cart" aria-label="Carrito">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
+                <span class="nav-cart-count">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <div id="cart-drawer">
+        <div class="cart-header">
+            <h3>Tu Carrito</h3>
+            <button id="close-cart" aria-label="Cerrar carrito">✕</button>
+        </div>
+        <div id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total</span>
+                <span id="cart-total-price">$0</span>
+            </div>
+            <a href="checkout.html" class="btn-checkout">Finalizar Compra</a>
+        </div>
+    </div>
+    <div id="cart-overlay"></div>
+
+    <main class="product-page" id="product-page">
+        <div class="container">
+            <div class="product-loading" id="product-loading">
+                <div class="loading-spinner"></div>
+                <p>Cargando producto...</p>
+            </div>
+            <div class="product-detail" id="product-detail" style="display:none">
+                <div class="product-gallery" id="product-gallery">
+                    <span class="badge" id="product-badge"></span>
+                    <img id="product-image" class="gallery-main-img" src="" alt="" width="600" height="750">
+                    <div class="gallery-thumbs" id="gallery-thumbs"></div>
+                </div>
+                <div class="product-details">
+                    <div class="product-breadcrumb">
+                        <a href="index.html">Inicio</a> / <a href="index.html#coleccion">Colección</a> / <span id="product-cat-breadcrumb"></span>
+                    </div>
+                    <h1 id="product-title"></h1>
+                    <span class="product-category-tag" id="product-category-tag"></span>
+                    <p class="product-price-main" id="product-price"></p>
+                    <p class="product-description" id="product-description"></p>
+                    <div class="size-selector">
+                        <label>Seleccioná tu talle</label>
+                        <div class="size-options" id="size-options"></div>
+                    </div>
+                    <div class="qty-selector">
+                        <label>Cantidad</label>
+                        <div class="qty-controls">
+                            <button type="button" class="qty-btn" id="qty-minus">−</button>
+                            <input type="number" id="qty-input" value="1" min="1" max="99" readonly>
+                            <button type="button" class="qty-btn" id="qty-plus">+</button>
+                        </div>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn-add-cart" id="btn-add-cart"><span>Agregar al Carrito</span></button>
+                        <button class="btn-buy-now" id="btn-buy-now"><span>Comprar Ahora</span></button>
+                    </div>
+                    <div class="product-features" id="product-features"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="product-footer">
+        <p>&copy; 2026 Tus Encantos. Todos los derechos reservados.</p>
+        <p>Developed and designed by: <a href="https://gokywebs.net" target="_blank" rel="noopener noreferrer">Gokywebs</a></p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const params = new URLSearchParams(window.location.search);
+        const productId = params.get('id');
+
+        if (!productId) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // --- Cargar producto desde Firebase ---
+        try {
+            const doc = await db.collection('products').doc(productId).get();
+            if (!doc.exists) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const product = doc.data();
+            document.title = product.name + ' | Tus Encantos';
+
+            // Images gallery
+            const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
+            const imgEl = document.getElementById('product-image');
+            if (allImages.length > 0) {
+                imgEl.src = allImages[0];
+                imgEl.alt = product.name;
+            }
+
+            const thumbsEl = document.getElementById('gallery-thumbs');
+            if (allImages.length > 1) {
+                allImages.forEach((url, i) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = url;
+                    thumb.alt = product.name + ' ' + (i + 1);
+                    thumb.className = 'gallery-thumb' + (i === 0 ? ' active' : '');
+                    thumb.addEventListener('click', () => {
+                        imgEl.src = url;
+                        thumbsEl.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+                        thumb.classList.add('active');
+                    });
+                    thumbsEl.appendChild(thumb);
+                });
+            }
+
+            const badgeEl = document.getElementById('product-badge');
+            if (product.badge) {
+                badgeEl.textContent = product.badge;
+                badgeEl.style.display = 'block';
+            } else {
+                badgeEl.style.display = 'none';
+            }
+
+            document.getElementById('product-cat-breadcrumb').textContent = product.category;
+            document.getElementById('product-title').textContent = product.name;
+            document.getElementById('product-category-tag').textContent = product.category;
+            document.getElementById('product-price').textContent = '$' + product.price.toLocaleString('es-AR');
+            document.getElementById('product-description').textContent = product.description;
+
+            // Talles
+            const sizeOptionsEl = document.getElementById('size-options');
+            (product.sizes || SIZES).forEach(size => {
+                const btn = document.createElement('button');
+                btn.className = 'size-btn';
+                btn.textContent = size;
+                sizeOptionsEl.appendChild(btn);
+            });
+
+            // Features
+            const featuresEl = document.getElementById('product-features');
+            const featureIcons = [
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6AFCB" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6AFCB" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6AFCB" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6AFCB" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'
+            ];
+            (product.features || []).forEach((feat, i) => {
+                const div = document.createElement('div');
+                div.className = 'product-feature';
+                div.innerHTML = (featureIcons[i % featureIcons.length]) + ' ' + escapeHtml(feat);
+                featuresEl.appendChild(div);
+            });
+
+            document.getElementById('product-loading').style.display = 'none';
+            document.getElementById('product-detail').style.display = 'grid';
+
+            // --- Lógica de talle y carrito ---
+            let selectedSize = '';
+            sizeOptionsEl.querySelectorAll('.size-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    sizeOptionsEl.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedSize = btn.textContent.trim();
+                });
+            });
+
+            const productData = {
+                id: productId,
+                name: product.name,
+                price: product.price,
+                image: allImages[0] || '',
+                category: product.category
+            };
+
+            document.getElementById('btn-add-cart').addEventListener('click', () => {
+                if (!selectedSize) { showToast('Seleccioná un talle'); return; }
+                const qty = parseInt(document.getElementById('qty-input').value) || 1;
+                for (let i = 0; i < qty; i++) {
+                    cart.add({ ...productData, size: selectedSize });
+                }
+            });
+
+            document.getElementById('btn-buy-now').addEventListener('click', () => {
+                if (!selectedSize) { showToast('Seleccioná un talle'); return; }
+                const qty = parseInt(document.getElementById('qty-input').value) || 1;
+                for (let i = 0; i < qty; i++) {
+                    cart.add({ ...productData, size: selectedSize });
+                }
+                window.location.href = 'checkout.html';
+            });
+
+            // Qty controls
+            document.getElementById('qty-minus').addEventListener('click', () => {
+                const inp = document.getElementById('qty-input');
+                if (parseInt(inp.value) > 1) inp.value = parseInt(inp.value) - 1;
+            });
+            document.getElementById('qty-plus').addEventListener('click', () => {
+                const inp = document.getElementById('qty-input');
+                if (parseInt(inp.value) < 99) inp.value = parseInt(inp.value) + 1;
+            });
+
+            // Gallery zoom
+            const gallery = document.getElementById('product-gallery');
+            const galleryImg = document.getElementById('product-image');
+            gallery.addEventListener('mousemove', (e) => {
+                if (e.target.classList.contains('gallery-thumb')) return;
+                const rect = galleryImg.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                galleryImg.style.transformOrigin = x + '% ' + y + '%';
+                galleryImg.style.transform = 'scale(1.5)';
+            });
+            gallery.addEventListener('mouseleave', () => {
+                galleryImg.style.transformOrigin = 'center center';
+                galleryImg.style.transform = 'scale(1)';
+            });
+
+        } catch (err) {
+            document.getElementById('product-loading').innerHTML = '<p style="color:#c00">Error al cargar el producto</p>';
+        }
+
+        // --- Carrito ---
+        const cart = {
+            items: JSON.parse(localStorage.getItem('tusencantosCart') || '[]'),
+            save() {
+                localStorage.setItem('tusencantosCart', JSON.stringify(this.items));
+                this.updateUI();
+            },
+            add(product) {
+                const existing = this.items.find(i => i.id === product.id && i.size === product.size);
+                if (existing) { existing.qty += 1; }
+                else { this.items.push({ ...product, qty: 1 }); }
+                this.save();
+                showToast(product.name + ' agregado al carrito');
+                openCart();
+            },
+            remove(index) {
+                this.items.splice(index, 1);
+                this.save();
+            },
+            getTotal() {
+                return this.items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            },
+            updateUI() {
+                const count = this.items.reduce((sum, i) => sum + i.qty, 0);
+                document.querySelectorAll('.nav-cart-count').forEach(el => {
+                    el.textContent = count;
+                    el.classList.toggle('visible', count > 0);
+                });
+                const cartItemsEl = document.getElementById('cart-items');
+                const cartTotalPrice = document.getElementById('cart-total-price');
+                cartItemsEl.innerHTML = '';
+                if (this.items.length === 0) {
+                    cartItemsEl.innerHTML = '<p style="text-align:center;color:#999;padding:40px 0;font-size:.9rem">Tu carrito está vacío</p>';
+                } else {
+                    this.items.forEach((item, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'cart-item';
+                        div.innerHTML = `
+                            <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" width="70" height="85">
+                            <div class="cart-item-info">
+                                <h4>${escapeHtml(item.name)}</h4>
+                                <p class="cart-item-size">Talle: ${escapeHtml(item.size)} — Cant: ${item.qty}</p>
+                                <p class="cart-item-price">$${(item.price * item.qty).toLocaleString('es-AR')}</p>
+                            </div>
+                            <button class="cart-item-remove" data-index="${index}">✕</button>
+                        `;
+                        cartItemsEl.appendChild(div);
+                    });
+                }
+                cartTotalPrice.textContent = '$' + this.getTotal().toLocaleString('es-AR');
+                cartItemsEl.querySelectorAll('.cart-item-remove').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.remove(parseInt(btn.dataset.index));
+                    });
+                });
+            }
+        };
+        cart.updateUI();
+
+        const cartDrawer = document.getElementById('cart-drawer');
+        const closeCartEl = document.getElementById('close-cart');
+        const cartOverlay = document.getElementById('cart-overlay');
+        const navCartBtn = document.querySelector('.nav-cart');
+
+        function openCart() { cartDrawer.classList.add('open'); cartOverlay.classList.add('visible'); }
+        function closeCart() { cartDrawer.classList.remove('open'); cartOverlay.classList.remove('visible'); }
+
+        navCartBtn.addEventListener('click', openCart);
+        closeCartEl.addEventListener('click', closeCart);
+        cartOverlay.addEventListener('click', closeCart);
+
+        function showToast(message) {
+            const existing = document.querySelector('.notification-toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('out');
+                setTimeout(() => toast.remove(), 400);
+            }, 2500);
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+    });
+    </script>
+
+    <style>
+    .product-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:16px;color:#999}
+    .loading-spinner{width:36px;height:36px;border:3px solid #FAD6E5;border-top-color:#D96A9E;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
+</body>
+</html>

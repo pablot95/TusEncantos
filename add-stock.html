@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregar stock a productos - Tus Encantos</title>
+    <style>
+        body{font-family:sans-serif;max-width:600px;margin:60px auto;padding:20px}
+        h1{font-size:1.4rem;color:#333}
+        button{padding:14px 28px;background:#D96A9E;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;margin-top:20px}
+        button:hover{background:#c25888}
+        #log{margin-top:20px;padding:16px;background:#f8f8f8;border-radius:8px;font-size:.85rem;white-space:pre-wrap;max-height:400px;overflow-y:auto}
+    </style>
+</head>
+<body>
+    <h1>Agregar campo "stock: 0" a todos los productos</h1>
+    <button onclick="addStock()">Ejecutar</button>
+    <div id="log"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        const logEl = document.getElementById('log');
+        function log(msg) { logEl.textContent += msg + '\n'; }
+
+        async function addStock() {
+            log('Buscando productos sin campo stock...');
+            try {
+                const snapshot = await db.collection('products').get();
+                let count = 0;
+                for (const doc of snapshot.docs) {
+                    const data = doc.data();
+                    if (data.stock == null) {
+                        await db.collection('products').doc(doc.id).update({ stock: 0 });
+                        log('✓ ' + (data.name || doc.id) + ' → stock: 0');
+                        count++;
+                    } else {
+                        log('— ' + (data.name || doc.id) + ' ya tiene stock: ' + data.stock);
+                    }
+                }
+                log('\n¡Listo! Se actualizaron ' + count + ' productos.');
+            } catch (err) {
+                log('✗ Error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

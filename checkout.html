@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Checkout - Tus Encantos Boutique">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#F6AFCB">
+    <title>Finalizar Compra | Tus Encantos</title>
+    <link rel="icon" type="image/jpeg" href="images/logo.jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="checkout.css">
+</head>
+<body>
+
+    <nav class="checkout-nav">
+        <div class="nav-inner">
+            <a href="index.html" class="back-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Volver a la tienda
+            </a>
+            <a href="index.html" class="nav-logo">
+                <img src="images/logo.jpeg" alt="Tus Encantos" width="42" height="42">
+            </a>
+        </div>
+    </nav>
+
+    <main class="checkout-page">
+        <div class="container">
+            <div class="checkout-header">
+                <h1>Finalizar Compra</h1>
+                <p>Completá tus datos para continuar con el pago</p>
+            </div>
+
+            <div class="checkout-grid">
+                <div class="checkout-form-col">
+                    <form id="checkout-form" novalidate>
+                        <section class="form-section">
+                            <h2>Datos de Envío</h2>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="ship-name">Nombre *</label>
+                                    <input type="text" id="ship-name" name="shipName" required autocomplete="given-name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="ship-lastname">Apellido *</label>
+                                    <input type="text" id="ship-lastname" name="shipLastname" required autocomplete="family-name">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="ship-email">Email *</label>
+                                    <input type="email" id="ship-email" name="shipEmail" required autocomplete="email">
+                                </div>
+                                <div class="form-group">
+                                    <label for="ship-phone">Teléfono *</label>
+                                    <input type="tel" id="ship-phone" name="shipPhone" required autocomplete="tel">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="ship-address">Dirección *</label>
+                                <input type="text" id="ship-address" name="shipAddress" required autocomplete="street-address">
+                            </div>
+                            <div class="form-group">
+                                <label for="ship-message">Mensaje (opcional)</label>
+                                <textarea id="ship-message" name="shipMessage" rows="3" placeholder="Indicaciones especiales, horarios de entrega, etc."></textarea>
+                            </div>
+                        </section>
+
+                        <section class="form-section billing-section">
+                            <label class="billing-toggle">
+                                <input type="checkbox" id="billing-different">
+                                <span class="toggle-check"></span>
+                                <span>Datos de facturación distintos a los de envío</span>
+                            </label>
+                            <div id="billing-fields" class="billing-fields hidden">
+                                <h2>Datos de Facturación</h2>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="bill-name">Nombre *</label>
+                                        <input type="text" id="bill-name" name="billName" autocomplete="given-name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bill-lastname">Apellido *</label>
+                                        <input type="text" id="bill-lastname" name="billLastname" autocomplete="family-name">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="bill-email">Email *</label>
+                                        <input type="email" id="bill-email" name="billEmail" autocomplete="email">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bill-phone">Teléfono *</label>
+                                        <input type="tel" id="bill-phone" name="billPhone" autocomplete="tel">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bill-address">Dirección *</label>
+                                    <input type="text" id="bill-address" name="billAddress" autocomplete="street-address">
+                                </div>
+                            </div>
+                        </section>
+                    </form>
+                </div>
+
+                <div class="checkout-summary-col">
+                    <div class="order-summary">
+                        <h2>Resumen del Pedido</h2>
+                        <div id="summary-items" class="summary-items">
+                            <p class="summary-loading">Cargando productos...</p>
+                        </div>
+                        <div class="summary-total">
+                            <span>Total</span>
+                            <span id="summary-total-price">$0</span>
+                        </div>
+                    </div>
+
+                    <div class="payment-section">
+                        <button id="btn-pay" class="btn-pay" disabled>
+                            <svg class="mp-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+                                <rect x="1" y="4" width="22" height="16" rx="3" stroke="#009EE3" stroke-width="2"/>
+                                <path d="M1 10h22" stroke="#009EE3" stroke-width="2"/>
+                                <rect x="4" y="14" width="6" height="2" rx="1" fill="#009EE3"/>
+                            </svg>
+                            Pagar con Mercado Pago
+                        </button>
+
+                        <div class="card-icons">
+                            <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="42" height="28" rx="4" fill="#1A1F71"/><text x="6" y="18" fill="#fff" font-size="10" font-weight="bold" font-family="Arial">VISA</text></svg>
+                            <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="42" height="28" rx="4" fill="#252525"/><circle cx="17" cy="14" r="8" fill="#EB001B"/><circle cx="25" cy="14" r="8" fill="#F79E1B" opacity=".85"/></svg>
+                            <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="42" height="28" rx="4" fill="#2E77BC"/><text x="5" y="18" fill="#fff" font-size="8" font-weight="bold" font-family="Arial">AMEX</text></svg>
+                        </div>
+
+                        <p class="payment-note">Te llevaremos a Mercado Pago para terminar la operación.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="checkout-footer">
+        <p>&copy; 2026 Tus Encantos. Todos los derechos reservados.</p>
+    </footer>
+
+    <div id="checkout-toast" class="checkout-toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="checkout.js"></script>
+</body>
+</html>

@@ -47,15 +47,16 @@
                 <li><a href="#contacto">Contacto</a></li>
             </ul>
             <div class="nav-actions">
+                
+                <button class="menu-toggle" id="menu-toggle" aria-label="Menú">
+                    <span></span><span></span><span></span>
+                </button>
                 <button id="cart-btn" aria-label="Carrito de compras">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                     </svg>
                     <span id="cart-count">0</span>
-                </button>
-                <button class="menu-toggle" id="menu-toggle" aria-label="Menú">
-                    <span></span><span></span><span></span>
                 </button>
             </div>
         </div>
@@ -81,7 +82,7 @@
                 <span>Total</span>
                 <span id="cart-total-price">$0</span>
             </div>
-            <button class="btn-checkout">Finalizar Compra</button>
+            <a href="checkout.html" class="btn-checkout">Finalizar Compra</a>
         </div>
     </div>
     <div id="cart-overlay"></div>
@@ -99,7 +100,7 @@
             <a href="#coleccion" class="btn-primary reveal">Explorar Colección</a>
         </div>
         <div class="hero-image reveal">
-            <img src="images/sweater1.jpeg" alt="Moda femenina Tus Encantos" width="500" height="600" loading="eager">
+            <img src="uploads/sweater1.jpeg" alt="Moda femenina Tus Encantos" width="500" height="600" loading="eager">
         </div>
         <div class="hero-scroll-indicator">
             <div class="scroll-line"></div>
@@ -127,136 +128,45 @@
         </div>
     </section>
 
-    <section class="categories-strip">
-        <div class="container">
-            <div class="category-pill reveal" data-filter="all">Todo</div>
-            <div class="category-pill reveal" data-filter="deportivo">Deportivo</div>
-            <div class="category-pill reveal" data-filter="jean">Jeans</div>
-            <div class="category-pill reveal" data-filter="sweater">Sweaters</div>
-            <div class="category-pill reveal" data-filter="chaleco">Chalecos</div>
-        </div>
-    </section>
-
     <section id="coleccion" class="products-section">
         <div class="container">
             <div class="section-header">
                 <p class="section-tag reveal">Nuestra Selección</p>
                 <h2 class="reveal">Prendas que enamoran</h2>
             </div>
-            <div class="products-grid">
-
-                <article class="product-card reveal" data-category="deportivo">
-                    <a href="producto-deportivo1.html" class="product-link">
-                        <div class="product-img-wrap">
-                            <img src="images/deportivo1.jpeg" alt="Conjunto deportivo femenino rosa" width="400" height="500" loading="lazy">
-                            <div class="product-overlay">
-                                <span>Ver Detalle</span>
-                            </div>
+            <div class="collection-layout">
+                <aside class="filters-sidebar reveal">
+                    <div class="filter-group">
+                        <h3>Categorías</h3>
+                        <ul class="filter-list" id="filter-categories">
+                            <li><button class="filter-btn active" data-category="all">Todos</button></li>
+                            <li><button class="filter-btn" data-category="Jeans">Jeans</button></li>
+                            <li><button class="filter-btn" data-category="Remeras">Remeras</button></li>
+                            <li><button class="filter-btn" data-category="Suéteres">Suéteres</button></li>
+                            <li><button class="filter-btn" data-category="Buzos">Buzos</button></li>
+                            <li><button class="filter-btn" data-category="Calzas">Calzas</button></li>
+                            <li><button class="filter-btn" data-category="Camperas">Camperas</button></li>
+                            <li><button class="filter-btn" data-category="Chalecos">Chalecos</button></li>
+                            <li><button class="filter-btn" data-category="Camisas">Camisas</button></li>
+                            <li><button class="filter-btn" data-category="Carteras">Carteras</button></li>
+                            <li><button class="filter-btn" data-category="Bolsos">Bolsos</button></li>
+                            <li><button class="filter-btn" data-category="Short">Short</button></li>
+                            <li><button class="filter-btn" data-category="Vestidos">Vestidos</button></li>
+                            <li><button class="filter-btn" data-category="Sacos largos">Sacos largos</button></li>
+                            <li><button class="filter-btn" data-category="Tapados de paño">Tapados de paño</button></li>
+                            <li><button class="filter-btn" data-category="Deportivo">Deportivo</button></li>
+                        </ul>
+                    </div>
+                    <button class="filter-clear" id="filter-clear">Limpiar filtros</button>
+                </aside>
+                <div class="products-col">
+                    <div class="products-grid" id="products-grid">
+                        <div class="products-loading" id="products-loading">
+                            <div class="loading-spinner"></div>
+                            <p>Cargando productos...</p>
                         </div>
-                        <div class="product-info">
-                            <span class="product-tag">Deportivo</span>
-                            <h3>Conjunto Sport Bloom</h3>
-                            <p class="product-price">$18.500</p>
-                        </div>
-                    </a>
-                </article>
-
-                <article class="product-card reveal" data-category="deportivo">
-                    <a href="producto-deportivo2.html" class="product-link">
-                        <div class="product-img-wrap">
-                            <img src="images/deportivo2.jpeg" alt="Conjunto deportivo femenino elegante" width="400" height="500" loading="lazy">
-                            <div class="product-overlay">
-                                <span>Ver Detalle</span>
-                            </div>
-                        </div>
-                        <div class="product-info">
-                            <span class="product-tag">Deportivo</span>
-                            <h3>Set Activa Luxe</h3>
-                            <p class="product-price">$19.900</p>
-                        </div>
-                    </a>
-                </article>
-
-                <article class="product-card reveal" data-category="jean">
-                    <a href="producto-jean1.html" class="product-link">
-                        <div class="product-img-wrap">
-                            <img src="images/jean1.jpeg" alt="Jean mujer tiro alto" width="400" height="500" loading="lazy">
-                            <div class="product-overlay">
-                                <span>Ver Detalle</span>
-                            </div>
-                        </div>
-                        <div class="product-info">
-                            <span class="product-tag">Jeans</span>
-                            <h3>Jean Silueta Perfecta</h3>
-                            <p class="product-price">$22.000</p>
-                        </div>
-                    </a>
-                </article>
-
-                <article class="product-card reveal" data-category="jean">
-                    <a href="producto-jean2.html" class="product-link">
-                        <div class="product-img-wrap">
-                            <img src="images/jean2.jpeg" alt="Jean mujer corte recto" width="400" height="500" loading="lazy">
-                            <div class="product-overlay">
-                                <span>Ver Detalle</span>
-                            </div>
-                        </div>
-                        <div class="product-info">
-                            <span class="product-tag">Jeans</span>
-                            <h3>Jean Essential Denim</h3>
-                            <p class="product-price">$21.500</p>
-                        </div>
-                    </a>
-                </article>
-
-                <article class="product-card reveal" data-category="sweater">
-                    <a href="producto-sweater1.html" class="product-link">
-                        <div class="product-img-wrap">
-                            <img src="images/sweater1.jpeg" alt="Sweater mujer tejido suave" width="400" height="500" loading="lazy">
-                            <div class="product-overlay">
-                                <span>Ver Detalle</span>
-                            </div>
-                        </div>
-                        <div class="product-info">
-                            <span class="product-tag">Sweaters</span>
-                            <h3>Sweater Nuage</h3>
-                            <p class="product-price">$16.800</p>
-                        </div>
-                    </a>
-                </article>
-
-                <article class="product-card reveal" data-category="sweater">
-                    <a href="producto-sweater2.html" class="product-link">
-                        <div class="product-img-wrap">
-                            <img src="images/sweater2.jpeg" alt="Sweater mujer oversized" width="400" height="500" loading="lazy">
-                            <div class="product-overlay">
-                                <span>Ver Detalle</span>
-                            </div>
-                        </div>
-                        <div class="product-info">
-                            <span class="product-tag">Sweaters</span>
-                            <h3>Sweater Rosé Dream</h3>
-                            <p class="product-price">$17.200</p>
-                        </div>
-                    </a>
-                </article>
-
-                <article class="product-card reveal" data-category="chaleco">
-                    <a href="producto-chaleco.html" class="product-link">
-                        <div class="product-img-wrap">
-                            <img src="images/chaleco.jpeg" alt="Chaleco mujer elegante" width="400" height="500" loading="lazy">
-                            <div class="product-overlay">
-                                <span>Ver Detalle</span>
-                            </div>
-                        </div>
-                        <div class="product-info">
-                            <span class="product-tag">Chalecos</span>
-                            <h3>Chaleco Atelier</h3>
-                            <p class="product-price">$14.500</p>
-                        </div>
-                    </a>
-                </article>
-
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -404,9 +314,11 @@
                     </div>
                     <div>
                         <h4>Categorías</h4>
-                        <a href="#coleccion">Deportivo</a>
                         <a href="#coleccion">Jeans</a>
-                        <a href="#coleccion">Sweaters</a>
+                        <a href="#coleccion">Remeras</a>
+                        <a href="#coleccion">Suéteres</a>
+                        <a href="#coleccion">Buzos</a>
+                        <a href="#coleccion">Camperas</a>
                         <a href="#coleccion">Chalecos</a>
                     </div>
                 </div>
@@ -418,6 +330,10 @@
         </div>
     </footer>
 
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="main.js"></script>
 
 </body>

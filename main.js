@@ -48,27 +48,119 @@ document.addEventListener('DOMContentLoaded', () => {
 
     reveals.forEach(el => revealObserver.observe(el));
 
-    const pills = document.querySelectorAll('.category-pill');
-    const cards = document.querySelectorAll('.product-card');
+    // --- Cargar productos desde Firebase ---
+    let allProducts = [];
+    let activeCategory = 'all';
 
-    pills.forEach(pill => {
-        pill.addEventListener('click', () => {
-            pills.forEach(p => p.classList.remove('active'));
-            pill.classList.add('active');
+    const productsGrid = document.getElementById('products-grid');
+    const productsLoading = document.getElementById('products-loading');
+    const filterCategoriesList = document.getElementById('filter-categories');
 
-            const filter = pill.dataset.filter;
+    // Construir lista de categorías inmediatamente (no depende de Firebase)
+    function buildCategoryFilters() {
+        filterCategoriesList.innerHTML = '<li><button class="filter-btn active" data-category="all">Todos</button></li>';
+        CATEGORIES.forEach(cat => {
+            const li = document.createElement('li');
+            li.innerHTML = `<button class="filter-btn" data-category="${cat}">${cat}</button>`;
+            filterCategoriesList.appendChild(li);
+        });
+        setupFilterListeners();
+    }
+    buildCategoryFilters();
 
-            cards.forEach(card => {
-                if (filter === 'all' || card.dataset.category === filter) {
-                    card.classList.remove('hidden');
-                    card.style.animation = 'fadeInUp .5s var(--ease) forwards';
-                } else {
-                    card.classList.add('hidden');
-                }
-            });
+    // Mobile: toggle filter groups
+    document.querySelectorAll('.filter-group h3').forEach(h3 => {
+        h3.addEventListener('click', () => {
+            h3.parentElement.classList.toggle('open');
         });
     });
 
+    async function loadProducts() {
+        try {
+            const snapshot = await db.collection('products').get();
+            allProducts = [];
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                data._id = doc.id;
+                allProducts.push(data);
+            });
+
+            renderProducts();
+        } catch (err) {
+            if (productsLoading) {
+                productsLoading.innerHTML = '<p style="color:#999">Error al cargar productos</p>';
+            }
+        }
+    }
+
+    function renderProducts() {
+        if (productsLoading) productsLoading.style.display = 'none';
+        productsGrid.querySelectorAll('.product-card').forEach(el => el.remove());
+
+        let filtered = allProducts;
+        if (activeCategory !== 'all') {
+            filtered = filtered.filter(p => p.category === activeCategory);
+        }
+
+        if (filtered.length === 0) {
+            const emptyMsg = document.createElement('p');
+            emptyMsg.className = 'product-card products-empty-msg';
+            emptyMsg.textContent = 'No se encontraron productos con estos filtros.';
+            emptyMsg.style.cssText = 'text-align:center;color:#999;padding:40px 0;grid-column:1/-1;font-size:.9rem';
+            productsGrid.appendChild(emptyMsg);
+            return;
+        }
+
+        filtered.forEach(p => {
+            const article = document.createElement('article');
+            article.className = 'product-card reveal visible';
+            article.dataset.category = p.category;
+            const mainImg = (p.images && p.images.length > 0) ? p.images[0] : (p.image || '');
+            article.innerHTML = `
+                <a href="producto.html?id=${encodeURIComponent(p._id)}" class="product-link">
+                    <div class="product-img-wrap">
+                        <img src="${escapeAttr(mainImg)}" alt="${escapeAttr(p.name)}" width="400" height="500" loading="lazy">
+                        <div class="product-overlay">
+                            <span>Ver Detalle</span>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-tag">${escapeHtml(p.category)}</span>
+                        <h3>${escapeHtml(p.name)}</h3>
+                        <p class="product-price">$${p.price.toLocaleString('es-AR')}</p>
+                    </div>
+                </a>
+            `;
+            productsGrid.appendChild(article);
+        });
+    }
+
+    function setupFilterListeners() {
+        // Category filters
+        filterCategoriesList.addEventListener('click', (e) => {
+            const btn = e.target.closest('.filter-btn');
+            if (!btn) return;
+            filterCategoriesList.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeCategory = btn.dataset.category;
+            renderProducts();
+        });
+
+        // Size filters removed
+
+        // Clear filters
+        document.getElementById('filter-clear').addEventListener('click', () => {
+            activeCategory = 'all';
+            filterCategoriesList.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            filterCategoriesList.querySelector('[data-category="all"]').classList.add('active');
+            renderProducts();
+        });
+    }
+
+    loadProducts();
+
+    // --- Stats counter ---
     const statNumbers = document.querySelectorAll('.stat-number');
     const statsObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -96,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 25);
     }
 
+    // --- Carrito ---
     const cartBtn = document.getElementById('cart-btn');
     const cartDrawer = document.getElementById('cart-drawer');
     const closeCart = document.getElementById('close-cart');
@@ -159,10 +252,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const div = document.createElement('div');
                     div.className = 'cart-item';
                     div.innerHTML = `
-                        <img src="${item.image}" alt="${item.name}" width="70" height="85">
+                        <img src="${escapeAttr(item.image)}" alt="${escapeAttr(item.name)}" width="70" height="85">
                         <div class="cart-item-info">
-                            <h4>${item.name}</h4>
-                            <p class="cart-item-size">Talle: ${item.size} — Cant: ${item.qty}</p>
+                            <h4>${escapeHtml(item.name)}</h4>
+                            <p class="cart-item-size">Talle: ${escapeHtml(item.size)} — Cant: ${item.qty}</p>
                             <p class="cart-item-price">$${(item.price * item.qty).toLocaleString('es-AR')}</p>
                         </div>
                         <button class="cart-item-remove" data-index="${index}">✕</button>
@@ -198,6 +291,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2500);
     }
 
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+        return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+});
+
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             const href = this.getAttribute('href');
@@ -219,4 +323,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, { passive: true });
 
-});

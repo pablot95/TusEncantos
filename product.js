@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         cart.add({ ...productData, size: selectedSize });
-        showToast('Redirigiendo al checkout...');
+        window.location.href = 'checkout.html';
     });
 
     const cartDrawer = document.getElementById('cart-drawer');
