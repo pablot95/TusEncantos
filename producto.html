@@ -67,6 +67,10 @@
                     <h1 id="product-title"></h1>
                     <span class="product-category-tag" id="product-category-tag"></span>
                     <p class="product-price-main" id="product-price"></p>
+                    <div class="low-stock-alert" id="low-stock-alert" style="display:none">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span>¡Últimas unidades disponibles!</span>
+                    </div>
                     <p class="product-description" id="product-description"></p>
                     <div class="size-selector">
                         <label>Seleccioná tu talle</label>
@@ -156,6 +160,24 @@
             document.getElementById('product-title').textContent = product.name;
             document.getElementById('product-category-tag').textContent = product.category;
             document.getElementById('product-price').textContent = '$' + product.price.toLocaleString('es-AR');
+
+            // Verificación de stock
+            const stock = product.stock != null ? product.stock : 0;
+            if (stock === 0) {
+                const alertEl = document.getElementById('low-stock-alert');
+                alertEl.style.display = 'flex';
+                alertEl.className = 'low-stock-alert out-of-stock';
+                alertEl.querySelector('span').textContent = 'Producto sin stock';
+                document.getElementById('btn-add-cart').disabled = true;
+                document.getElementById('btn-add-cart').innerHTML = '<span>Sin Stock</span>';
+                document.getElementById('btn-buy-now').disabled = true;
+                document.getElementById('btn-buy-now').innerHTML = '<span>Sin Stock</span>';
+            } else if (stock < 5) {
+                const alertEl = document.getElementById('low-stock-alert');
+                alertEl.style.display = 'flex';
+                alertEl.querySelector('span').textContent = stock === 1 ? '¡Última unidad disponible!' : '¡Solo quedan ' + stock + ' unidades!';
+            }
+
             document.getElementById('product-description').textContent = product.description;
 
             // Talles
@@ -203,17 +225,26 @@
                 category: product.category
             };
 
+            // Limitar cantidad al stock disponible
+            const maxQty = stock > 0 ? stock : 0;
+            const qtyInput = document.getElementById('qty-input');
+            if (maxQty > 0) qtyInput.max = maxQty;
+
             document.getElementById('btn-add-cart').addEventListener('click', () => {
+                if (stock === 0) { showToast('Producto sin stock'); return; }
                 if (!selectedSize) { showToast('Seleccioná un talle'); return; }
-                const qty = parseInt(document.getElementById('qty-input').value) || 1;
+                const qty = parseInt(qtyInput.value) || 1;
+                if (qty > stock) { showToast('Solo hay ' + stock + ' unidades disponibles'); return; }
                 for (let i = 0; i < qty; i++) {
                     cart.add({ ...productData, size: selectedSize });
                 }
             });
 
             document.getElementById('btn-buy-now').addEventListener('click', () => {
+                if (stock === 0) { showToast('Producto sin stock'); return; }
                 if (!selectedSize) { showToast('Seleccioná un talle'); return; }
-                const qty = parseInt(document.getElementById('qty-input').value) || 1;
+                const qty = parseInt(qtyInput.value) || 1;
+                if (qty > stock) { showToast('Solo hay ' + stock + ' unidades disponibles'); return; }
                 for (let i = 0; i < qty; i++) {
                     cart.add({ ...productData, size: selectedSize });
                 }
@@ -222,12 +253,12 @@
 
             // Qty controls
             document.getElementById('qty-minus').addEventListener('click', () => {
-                const inp = document.getElementById('qty-input');
-                if (parseInt(inp.value) > 1) inp.value = parseInt(inp.value) - 1;
+                if (parseInt(qtyInput.value) > 1) qtyInput.value = parseInt(qtyInput.value) - 1;
             });
             document.getElementById('qty-plus').addEventListener('click', () => {
-                const inp = document.getElementById('qty-input');
-                if (parseInt(inp.value) < 99) inp.value = parseInt(inp.value) + 1;
+                const current = parseInt(qtyInput.value);
+                if (current < maxQty) qtyInput.value = current + 1;
+                else showToast('Solo hay ' + stock + ' unidades disponibles');
             });
 
             // Gallery zoom

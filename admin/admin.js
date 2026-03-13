@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td><strong>${escapeHtml(p.name)}</strong></td>
                     <td>${escapeHtml(p.category)}</td>
                     <td>$${p.price ? p.price.toLocaleString('es-AR') : '0'}</td>
-                    <td>${p.stock != null ? p.stock : 0}</td>
+                    <td>${p.stock != null && p.stock < 5 ? '<span class="low-stock-badge">⚠ ' + p.stock + '</span>' : (p.stock != null ? p.stock : 0)}</td>
                     <td>${(p.sizes || []).join(', ')}</td>
                     <td>
                         <div class="action-btns">

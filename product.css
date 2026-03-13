@@ -225,6 +225,35 @@ button{border:none;background:none;cursor:pointer;font-family:inherit}
     margin-bottom:28px;
 }
 
+.low-stock-alert{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 16px;
+    background:#fff3e0;
+    border:1px solid #ffcc80;
+    border-radius:10px;
+    color:#e65100;
+    font-size:.85rem;
+    font-weight:600;
+    margin-bottom:20px;
+    animation:lowStockPulse 2s ease-in-out infinite;
+}
+.low-stock-alert.out-of-stock{
+    background:#fdecea;
+    border-color:#f5c6cb;
+    color:#c62828;
+    animation:none;
+}
+@keyframes lowStockPulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+.btn-add-cart:disabled,
+.btn-buy-now:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+    pointer-events:none;
+}
+
 .product-details .product-description{
     font-size:.92rem;
     line-height:1.8;

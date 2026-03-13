@@ -129,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="product-tag">${escapeHtml(p.category)}</span>
                         <h3>${escapeHtml(p.name)}</h3>
                         <p class="product-price">$${p.price.toLocaleString('es-AR')}</p>
+                        ${(p.stock != null && p.stock > 0 && p.stock < 5) ? '<span class="low-stock-tag">¡Últimas unidades!</span>' : ''}
                     </div>
                 </a>
             `;

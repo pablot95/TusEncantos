@@ -127,15 +127,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Re-verificar precios desde Firestore al momento del pago
             const freshItems = [];
             let freshTotal = 0;
+            const btnPayOriginalHTML = btnPay.innerHTML;
             for (const item of verifiedItems) {
                 const doc = await db.collection('products').doc(item.id).get();
                 if (!doc.exists) {
                     showToast('Producto no encontrado: ' + item.name, 'error');
                     btnPay.disabled = false;
-                    btnPay.innerHTML = '<svg class="mp-icon" width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="1" y="4" width="22" height="16" rx="3" stroke="#009EE3" stroke-width="2"/><path d="M1 10h22" stroke="#009EE3" stroke-width="2"/><rect x="4" y="14" width="6" height="2" rx="1" fill="#009EE3"/></svg> Pagar con Mercado Pago';
+                    btnPay.innerHTML = btnPayOriginalHTML;
                     return;
                 }
                 const data = doc.data();
+                const availableStock = data.stock != null ? data.stock : 0;
+                if (availableStock === 0) {
+                    showToast(data.name + ' está sin stock. Eliminalo del carrito para continuar.', 'error');
+                    btnPay.disabled = false;
+                    btnPay.innerHTML = btnPayOriginalHTML;
+                    return;
+                }
+                if (item.qty > availableStock) {
+                    showToast(data.name + ': solo hay ' + availableStock + ' unidades disponibles (tenés ' + item.qty + ')', 'error');
+                    btnPay.disabled = false;
+                    btnPay.innerHTML = btnPayOriginalHTML;
+                    return;
+                }
                 freshItems.push({
                     productId: item.id,
                     name: data.name,
