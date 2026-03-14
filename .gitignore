@@ -1,0 +1,14 @@
+# Credenciales MercadoPago — NUNCA subir al repo
+api/mp-config.php
+
+# Logs de pagos
+payments/
+!payments/.htaccess
+
+# Node
+node_modules/
+functions/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

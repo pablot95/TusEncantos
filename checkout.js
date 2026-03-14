@@ -194,20 +194,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             localStorage.removeItem('tusencantosCart');
 
-            showToast('Orden creada correctamente. Redirigiendo a Mercado Pago...', 'success');
+            showToast('Orden creada. Redirigiendo a Mercado Pago...', 'success');
 
-            // TODO: Cuando tengas las keys de MercadoPago, descomentar:
-            // const response = await fetch('TU_CLOUD_FUNCTION_URL/createPreference', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ orderId: docRef.id })
-            // });
-            // const { init_point } = await response.json();
-            // window.location.href = init_point;
+            // Crear preferencia de pago en MercadoPago via API PHP
+            const mpResponse = await fetch('api/create-preference.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    orderId: docRef.id,
+                    items: freshItems.map(i => ({ name: i.name, price: i.price, qty: i.qty })),
+                    payerEmail: shipping.email
+                })
+            });
 
-            setTimeout(() => {
-                window.location.href = 'index.html?order=created&id=' + docRef.id;
-            }, 2500);
+            const mpData = await mpResponse.json();
+
+            if (!mpResponse.ok || !mpData.init_point) {
+                showToast('Error al conectar con Mercado Pago: ' + (mpData.error || 'Intenta de nuevo'), 'error');
+                btnPay.disabled = false;
+                btnPay.innerHTML = '<svg class="mp-icon" width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="1" y="4" width="22" height="16" rx="3" stroke="#009EE3" stroke-width="2"/><path d="M1 10h22" stroke="#009EE3" stroke-width="2"/><rect x="4" y="14" width="6" height="2" rx="1" fill="#009EE3"/></svg> Pagar con Mercado Pago';
+                return;
+            }
+
+            // Guardar preferencia en la orden de Firestore
+            await db.collection('orders').doc(docRef.id).update({
+                preferenceId: mpData.preference_id
+            }).catch(() => {});
+
+            // Redirigir a MercadoPago (sandbox en modo test)
+            window.location.href = mpData.sandbox_init_point || mpData.init_point;
 
         } catch (err) {
             showToast('Error al crear la orden: ' + err.message, 'error');

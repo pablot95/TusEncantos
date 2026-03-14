@@ -1,0 +1,16 @@
+# Proteger archivos de configuración sensibles
+<Files "mp-config.php">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</Files>
+
+# Bloquear acceso directo a logs de pagos
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^../payments/ - [F,L]
+</IfModule>

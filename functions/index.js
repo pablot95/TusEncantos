@@ -5,8 +5,9 @@ const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 admin.initializeApp();
 const db = admin.firestore();
 
-// TODO: Reemplazar con tus credenciales de MercadoPago
-const MP_ACCESS_TOKEN = 'TU_ACCESS_TOKEN_DE_MERCADOPAGO';
+// Credenciales cargadas desde variables de entorno de Firebase
+// Configurar con: firebase functions:config:set mercadopago.access_token="TU_TOKEN"
+const MP_ACCESS_TOKEN = functions.config().mercadopago?.access_token || process.env.MP_ACCESS_TOKEN || '';
 
 const mpClient = new MercadoPagoConfig({ accessToken: MP_ACCESS_TOKEN });
 
