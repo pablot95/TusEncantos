@@ -129,6 +129,5 @@ if ($httpCode !== 201 || empty($data['init_point'])) {
 
 echo json_encode([
     'init_point'      => $data['init_point'],
-    'sandbox_init_point' => $data['sandbox_init_point'] ?? $data['init_point'],
-    'preference_id'   => $data['id']
+    'preference_id'   => $data['id'],
 ]);

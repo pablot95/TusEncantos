@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 
 // CORS — ajustá el dominio en producción
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowed = ['https://tusencantos.com', 'https://www.tusencantos.com', 'http://localhost'];
+$allowed = ['https://tusencantosindumentaria.com.ar', 'https://www.tusencantosindumentaria.com.ar', 'http://localhost'];
 if (in_array($origin, $allowed, true)) {
     header("Access-Control-Allow-Origin: $origin");
 }

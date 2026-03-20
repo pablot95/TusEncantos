@@ -160,6 +160,12 @@ input,textarea,select{font-family:inherit;outline:none}
 .images-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .images-preview img{width:80px;height:100px;object-fit:cover;border-radius:8px}
 
+.stock-per-size{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.stock-size-item{display:flex;flex-direction:column;align-items:center;gap:4px}
+.stock-size-item span{font-size:.75rem;font-weight:700;color:#888;text-transform:uppercase}
+.stock-size-item input{width:54px;padding:6px 4px;border:2px solid #eee;border-radius:8px;font-size:.85rem;text-align:center}
+.stock-size-item input:focus{border-color:var(--pink);outline:none}
+
 .sizes-checkboxes{display:flex;gap:8px;flex-wrap:wrap}
 .sizes-checkboxes label{
     display:flex;align-items:center;gap:4px;padding:8px 14px;

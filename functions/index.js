@@ -65,9 +65,9 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             body: {
                 items: items,
                 back_urls: {
-                    success: `https://tusencantos.com/?payment=success&orderId=${orderId}`,
-                    failure: `https://tusencantos.com/?payment=failure&orderId=${orderId}`,
-                    pending: `https://tusencantos.com/?payment=pending&orderId=${orderId}`
+                    success: `https://tusencantosindumentaria.com.ar/?payment=success&orderId=${orderId}`,
+                    failure: `https://tusencantosindumentaria.com.ar/?payment=failure&orderId=${orderId}`,
+                    pending: `https://tusencantosindumentaria.com.ar/?payment=pending&orderId=${orderId}`
                 },
                 auto_return: 'approved',
                 external_reference: orderId,

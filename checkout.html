@@ -112,10 +112,70 @@
                         <div id="summary-items" class="summary-items">
                             <p class="summary-loading">Cargando productos...</p>
                         </div>
+                        <div class="summary-discount-row hidden" id="summary-discount-row">
+                            <span>Descuento transferencia (20%)</span>
+                            <span id="summary-discount-amount" class="discount-amount">-$0</span>
+                        </div>
                         <div class="summary-total">
                             <span>Total</span>
                             <span id="summary-total-price">$0</span>
                         </div>
+                    </div>
+
+                    <!-- Selector método de pago -->
+                    <div class="payment-method-section">
+                        <h3>Método de pago</h3>
+                        <div class="payment-methods">
+                            <label class="payment-method-option active" id="method-mp-label">
+                                <input type="radio" name="payment-method" value="mp" id="method-mp" checked>
+                                <div class="method-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="1" y="4" width="22" height="16" rx="3" stroke="#009EE3" stroke-width="2"/><path d="M1 10h22" stroke="#009EE3" stroke-width="2"/><rect x="4" y="14" width="6" height="2" rx="1" fill="#009EE3"/></svg>
+                                </div>
+                                <div class="method-info">
+                                    <span class="method-name">Mercado Pago</span>
+                                    <span class="method-sub">Tarjeta, débito, cuenta MP</span>
+                                </div>
+                            </label>
+
+                            <label class="payment-method-option" id="method-transfer-label">
+                                <input type="radio" name="payment-method" value="transfer" id="method-transfer">
+                                <div class="method-icon transfer-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M7 15h3M14 15h3"/></svg>
+                                </div>
+                                <div class="method-info">
+                                    <span class="method-name">Transferencia bancaria</span>
+                                    <span class="method-sub method-discount">🎉 20% de descuento</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Datos bancarios (visible solo con transferencia) -->
+                    <div class="transfer-data hidden" id="transfer-data">
+                        <h4>Datos para transferir</h4>
+                        <div class="bank-detail"><span>Banco</span><strong>Naranja X</strong></div>
+                        <div class="bank-detail"><span>Titular</span><strong>Edith Gabriela Cruz</strong></div>
+                        <div class="bank-detail"><span>CUIL</span><strong>27-33868005-3</strong></div>
+                        <div class="bank-detail copyable" id="copy-cbu" data-copy="4530000800018824694145">
+                            <span>CBU</span>
+                            <strong>4530000800018824694145</strong>
+                            <button class="copy-btn" title="Copiar CBU">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            </button>
+                        </div>
+                        <div class="bank-detail copyable" id="copy-alias" data-copy="tusencantos.NX.ARS">
+                            <span>Alias</span>
+                            <strong>tusencantos.NX.ARS</strong>
+                            <button class="copy-btn" title="Copiar Alias">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            </button>
+                        </div>
+                        <div class="bank-detail"><span>Caja ahorro</span><strong>1882469414</strong></div>
+                        <p class="transfer-instructions">Realizá la transferencia y enviá el comprobante por WhatsApp. Tu pedido se confirma cuando recibamos el pago.</p>
+                        <a id="btn-whatsapp" href="#" target="_blank" rel="noopener" class="btn-whatsapp">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.122 1.527 5.855L0 24l6.303-1.498A11.96 11.96 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.655-.51-5.18-1.402l-.371-.22-3.744.889.936-3.65-.242-.376A9.955 9.955 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                            Enviar comprobante por WhatsApp
+                        </a>
                     </div>
 
                     <div class="payment-section">
@@ -128,13 +188,13 @@
                             Pagar con Mercado Pago
                         </button>
 
-                        <div class="card-icons">
+                        <div class="card-icons" id="card-icons">
                             <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="42" height="28" rx="4" fill="#1A1F71"/><text x="6" y="18" fill="#fff" font-size="10" font-weight="bold" font-family="Arial">VISA</text></svg>
                             <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="42" height="28" rx="4" fill="#252525"/><circle cx="17" cy="14" r="8" fill="#EB001B"/><circle cx="25" cy="14" r="8" fill="#F79E1B" opacity=".85"/></svg>
                             <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="42" height="28" rx="4" fill="#2E77BC"/><text x="5" y="18" fill="#fff" font-size="8" font-weight="bold" font-family="Arial">AMEX</text></svg>
                         </div>
 
-                        <p class="payment-note">Te llevaremos a Mercado Pago para terminar la operación.</p>
+                        <p class="payment-note" id="payment-note">Te llevaremos a Mercado Pago para terminar la operación.</p>
                     </div>
                 </div>
             </div>
@@ -150,6 +210,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="firebase-config.js"></script>
     <script src="checkout.js"></script>
 </body>

@@ -7,6 +7,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnPay = document.getElementById('btn-pay');
     const toastEl = document.getElementById('checkout-toast');
 
+    // --- EmailJS init ---
+    emailjs.init('zZVYrIA_Jay4XSmPU');
+
+    // --- Detectar retorno de MercadoPago ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const returnOrderId = urlParams.get('orderId');
+
+    if (paymentStatus === 'success' && returnOrderId) {
+        await handlePaymentSuccess(returnOrderId);
+        return;
+    }
+
     const cartRaw = JSON.parse(localStorage.getItem('tusencantosCart') || '[]');
 
     if (cartRaw.length === 0) {
@@ -46,12 +59,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         verifiedItems = cartRaw;
     }
 
+    // --- Método de pago ---
+    let selectedMethod = 'mp'; // 'mp' | 'transfer'
+    const transferDataEl = document.getElementById('transfer-data');
+    const discountRow = document.getElementById('summary-discount-row');
+    const discountAmountEl = document.getElementById('summary-discount-amount');
+    const cardIconsEl = document.getElementById('card-icons');
+    const paymentNoteEl = document.getElementById('payment-note');
+    const WHATSAPP_NUMBER = '5493874819296';
+
+    document.querySelectorAll('input[name="payment-method"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            selectedMethod = radio.value;
+            document.querySelectorAll('.payment-method-option').forEach(l => l.classList.remove('active'));
+            radio.closest('.payment-method-option').classList.add('active');
+            renderSummary();
+            if (selectedMethod === 'transfer') {
+                transferDataEl.classList.remove('hidden');
+                cardIconsEl.classList.add('hidden');
+                paymentNoteEl.textContent = 'Realizá la transferencia y enviá el comprobante. Confirmamos tu pedido al recibir el pago.';
+                btnPay.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M7 15h3M14 15h3"/></svg> Confirmar pedido por transferencia`;
+                btnPay.style.background = '#27ae60';
+            } else {
+                transferDataEl.classList.add('hidden');
+                cardIconsEl.classList.remove('hidden');
+                paymentNoteEl.textContent = 'Te llevaremos a Mercado Pago para terminar la operación.';
+                btnPay.innerHTML = `<svg class="mp-icon" width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="1" y="4" width="22" height="16" rx="3" stroke="#009EE3" stroke-width="2"/><path d="M1 10h22" stroke="#009EE3" stroke-width="2"/><rect x="4" y="14" width="6" height="2" rx="1" fill="#009EE3"/></svg> Pagar con Mercado Pago`;
+                btnPay.style.background = '';
+            }
+        });
+    });
+
+    // Copiar CBU/Alias
+    document.querySelectorAll('.copyable').forEach(el => {
+        el.querySelector('.copy-btn').addEventListener('click', () => {
+            navigator.clipboard.writeText(el.dataset.copy).then(() => {
+                showToast('¡Copiado!', 'success');
+            });
+        });
+    });
+
     function renderSummary() {
         summaryItemsEl.innerHTML = '';
-        let total = 0;
+        let baseTotal = 0;
         verifiedItems.forEach(item => {
             const subtotal = item.price * item.qty;
-            total += subtotal;
+            baseTotal += subtotal;
             const div = document.createElement('div');
             div.className = 'summary-item';
             div.innerHTML = `
@@ -64,7 +117,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             summaryItemsEl.appendChild(div);
         });
-        summaryTotalEl.textContent = '$' + total.toLocaleString('es-AR');
+        if (selectedMethod === 'transfer') {
+            const discount = Math.round(baseTotal * 0.20);
+            const finalTotal = baseTotal - discount;
+            discountAmountEl.textContent = '-$' + discount.toLocaleString('es-AR');
+            discountRow.classList.remove('hidden');
+            summaryTotalEl.textContent = '$' + finalTotal.toLocaleString('es-AR');
+        } else {
+            discountRow.classList.add('hidden');
+            summaryTotalEl.textContent = '$' + baseTotal.toLocaleString('es-AR');
+        }
         btnPay.disabled = false;
     }
 
@@ -75,6 +137,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         billingFields.classList.toggle('hidden', !billingCheckbox.checked);
     });
 
+    // Actualizar link de WhatsApp al cargar (link genérico)
+    document.getElementById('btn-whatsapp').href =
+        `https://wa.me/5493874819296?text=Hola!%20Quiero%20enviar%20el%20comprobante%20de%20mi%20pedido.`;
     // --- Validación ---
     function validateForm() {
         let valid = true;
@@ -137,15 +202,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 const data = doc.data();
-                const availableStock = data.stock != null ? data.stock : 0;
-                if (availableStock === 0) {
-                    showToast(data.name + ' está sin stock. Eliminalo del carrito para continuar.', 'error');
+                // Soporte para stock por talle (objeto) o stock global (número, legado)
+                const stockVal = (typeof data.stock === 'object' && data.stock !== null)
+                    ? (data.stock[item.size] ?? 0)
+                    : (data.stock ?? 0);
+                if (stockVal === 0) {
+                    showToast(data.name + ' (talle ' + item.size + ') está sin stock. Eliminalo del carrito para continuar.', 'error');
                     btnPay.disabled = false;
                     btnPay.innerHTML = btnPayOriginalHTML;
                     return;
                 }
-                if (item.qty > availableStock) {
-                    showToast(data.name + ': solo hay ' + availableStock + ' unidades disponibles (tenés ' + item.qty + ')', 'error');
+                if (item.qty > stockVal) {
+                    showToast(data.name + ' (talle ' + item.size + '): solo hay ' + stockVal + ' unidades disponibles (tenés ' + item.qty + ')', 'error');
                     btnPay.disabled = false;
                     btnPay.innerHTML = btnPayOriginalHTML;
                     return;
@@ -159,6 +227,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     image: data.image
                 });
                 freshTotal += data.price * item.qty;
+            }
+
+            // Aplicar descuento por transferencia
+            const isTransfer = selectedMethod === 'transfer';
+            if (isTransfer) {
+                freshTotal = Math.round(freshTotal * 0.80);
             }
 
             const shipping = {
@@ -186,13 +260,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 shipping: shipping,
                 billing: billing,
                 total: freshTotal,
-                status: 'pending',
+                paymentMethod: isTransfer ? 'transfer' : 'mercadopago',
+                status: isTransfer ? 'pending_transfer' : 'pending',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             const docRef = await db.collection('orders').add(order);
 
             localStorage.removeItem('tusencantosCart');
+
+            if (isTransfer) {
+                // Flujo transferencia: redirigir a WhatsApp con los datos del pedido
+                const itemsList = freshItems.map(i => `• ${i.name} (Talle: ${i.size}) x${i.qty}`).join('%0A');
+                const msg = `Hola! Quiero enviar el comprobante de mi pedido.%0A%0A*Pedido #${docRef.id}*%0A${itemsList}%0A%0A*Total: $${freshTotal.toLocaleString('es-AR')}* (con 20% descuento transferencia)%0A%0ADatos de envío: ${shipping.name} ${shipping.lastname} - ${shipping.address}`;
+                showToast('¡Pedido creado! Redirigiendo a WhatsApp...', 'success');
+                setTimeout(() => {
+                    window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
+                }, 1500);
+                return;
+            }
 
             showToast('Orden creada. Redirigiendo a Mercado Pago...', 'success');
 
@@ -221,8 +307,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 preferenceId: mpData.preference_id
             }).catch(() => {});
 
-            // Redirigir a MercadoPago (sandbox en modo test)
-            window.location.href = mpData.sandbox_init_point || mpData.init_point;
+            // Guardar datos de la orden para enviar emails al volver
+            sessionStorage.setItem('tusencantosOrder', JSON.stringify({
+                orderId: docRef.id,
+                items: freshItems,
+                shipping: shipping,
+                total: freshTotal
+            }));
+
+            // Redirigir a MercadoPago
+            window.location.href = mpData.init_point;
 
         } catch (err) {
             showToast('Error al crear la orden: ' + err.message, 'error');
@@ -251,4 +345,150 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.querySelectorAll('input, textarea').forEach(el => {
         el.addEventListener('input', () => el.classList.remove('error'));
     });
+
+    // --- Manejo de pago exitoso (retorno desde MercadoPago) ---
+    async function handlePaymentSuccess(orderId) {
+        // Mostrar pantalla de confirmación
+        document.querySelector('.checkout-page').innerHTML = `
+            <div class="container" style="text-align:center; padding: 60px 20px;">
+                <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+                <h1 style="font-family:'Playfair Display',serif; color:#333; margin-bottom:12px;">¡Gracias por tu compra!</h1>
+                <p style="color:#666; font-size:1.1rem; margin-bottom:8px;">Tu pago fue procesado con éxito.</p>
+                <p style="color:#999; font-size:0.95rem; margin-bottom:32px;" id="email-status">Enviando confirmación por email...</p>
+                <a href="index.html" style="display:inline-block; background:#F6AFCB; color:#fff; padding:14px 36px; border-radius:30px; text-decoration:none; font-weight:600; font-family:'Lato',sans-serif;">Volver a la tienda</a>
+            </div>
+        `;
+
+        const emailStatusEl = document.getElementById('email-status');
+
+        try {
+            // Leer datos guardados en sessionStorage (no requiere auth de Firestore)
+            const savedRaw = sessionStorage.getItem('tusencantosOrder');
+
+            let shipping, items, total, finalOrderId;
+
+            if (savedRaw) {
+                // Caso normal: sessionStorage disponible
+                const saved = JSON.parse(savedRaw);
+                sessionStorage.removeItem('tusencantosOrder');
+                shipping = saved.shipping || {};
+                items = saved.items || [];
+                total = saved.total || 0;
+                finalOrderId = saved.orderId || orderId;
+            } else {
+                // Fallback: sessionStorage vacío (Safari/iOS lo pierde al navegar a otro dominio)
+                // Leemos la orden directamente desde Firestore usando el orderId de la URL
+                finalOrderId = orderId;
+                try {
+                    const orderDoc = await db.collection('orders').doc(orderId).get();
+                    if (orderDoc.exists) {
+                        const orderData = orderDoc.data();
+                        shipping = orderData.shipping || {};
+                        items = (orderData.items || []).map(i => ({
+                            ...i,
+                            id: i.productId || i.id,
+                            price: i.price,
+                            qty: i.qty
+                        }));
+                        total = orderData.total || 0;
+                    } else {
+                        emailStatusEl.textContent = 'No se pudo enviar el email de confirmación.';
+                        return;
+                    }
+                } catch (fsErr) {
+                    console.error('Error leyendo orden de Firestore:', fsErr);
+                    emailStatusEl.textContent = 'No se pudo enviar el email de confirmación.';
+                    return;
+                }
+            }
+
+            // Reducir stock y actualizar estado de la orden en Firestore
+            try {
+                const stockUpdates = [];
+
+                // Agrupar cantidades por (productId, talle)
+                const qtyByProductSize = {};
+                items.forEach(item => {
+                    const pid = item.productId || item.id;
+                    const size = item.size;
+                    if (pid && size) {
+                        if (!qtyByProductSize[pid]) qtyByProductSize[pid] = {};
+                        qtyByProductSize[pid][size] = (qtyByProductSize[pid][size] || 0) + item.qty;
+                    }
+                });
+
+                // Reducir stock por talle con incremento atómico (campo stock.S, stock.M, etc.)
+                Object.entries(qtyByProductSize).forEach(([productId, sizeQtys]) => {
+                    const updates = {};
+                    Object.entries(sizeQtys).forEach(([size, qty]) => {
+                        updates[`stock.${size}`] = firebase.firestore.FieldValue.increment(-qty);
+                    });
+                    stockUpdates.push(
+                        db.collection('products').doc(productId).update(updates)
+                            .catch(err => console.error('Error reduciendo stock de ' + productId + ':', err))
+                    );
+                });
+
+                // Actualizar estado de la orden a "approved"
+                if (finalOrderId) {
+                    stockUpdates.push(
+                        db.collection('orders').doc(finalOrderId).update({
+                            status: 'approved',
+                            approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).catch(err => console.error('Error actualizando orden:', err))
+                    );
+                }
+
+                await Promise.all(stockUpdates);
+            } catch (err) {
+                console.error('Error al actualizar stock/orden:', err);
+            }
+
+            // Construir tabla de productos para el email
+            const itemsHtml = items.map(item =>
+                `<tr>
+                    <td style="padding:10px 12px; border-bottom:1px solid #f0e6eb;">${item.name}</td>
+                    <td style="padding:10px 12px; border-bottom:1px solid #f0e6eb; text-align:center;">${item.size || '-'}</td>
+                    <td style="padding:10px 12px; border-bottom:1px solid #f0e6eb; text-align:center;">${item.qty}</td>
+                    <td style="padding:10px 12px; border-bottom:1px solid #f0e6eb; text-align:right;">$${(item.price * item.qty).toLocaleString('es-AR')}</td>
+                </tr>`
+            ).join('');
+
+            const itemsList = items.map(item =>
+                `• ${item.name} (Talle: ${item.size || '-'}) x${item.qty} — $${(item.price * item.qty).toLocaleString('es-AR')}`
+            ).join('\n');
+
+            const totalFormatted = '$' + total.toLocaleString('es-AR');
+            const customerName = `${shipping.name || ''} ${shipping.lastname || ''}`.trim();
+            const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            const templateParams = {
+                order_id: finalOrderId,
+                customer_name: customerName,
+                customer_email: shipping.email || '',
+                customer_phone: shipping.phone || '',
+                customer_address: shipping.address || '',
+                customer_message: shipping.message || 'Sin mensaje',
+                items_html: itemsHtml,
+                items_list: itemsList,
+                order_total: totalFormatted,
+                order_date: fecha,
+            };
+
+            // Enviar email al comprador
+            const buyerPromise = emailjs.send('service_4yy6g8m', 'template_zxd7u0h', templateParams)
+                .catch(err => console.error('Email comprador falló:', err));
+
+            // Enviar email al vendedor
+            const sellerPromise = emailjs.send('service_4yy6g8m', 'template_3guc91a', templateParams)
+                .catch(err => console.error('Email vendedor falló:', err));
+
+            await Promise.all([buyerPromise, sellerPromise]);
+            emailStatusEl.textContent = 'Te enviamos un email de confirmación 📩';
+
+        } catch (err) {
+            console.error('Error al enviar emails:', err);
+            emailStatusEl.textContent = 'No se pudo enviar el email de confirmación.';
+        }
+    }
 });

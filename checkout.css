@@ -106,7 +106,7 @@ input,textarea,select{font-family:inherit;border:none;outline:none}
 .order-summary{
     background:var(--white);padding:28px;border-radius:16px;
     box-shadow:0 4px 24px rgba(0,0,0,.04);margin-bottom:20px;
-    position:sticky;top:86px;
+    top:86px;
 }
 .order-summary h2{
     font-family:var(--font-display);font-size:1.1rem;font-weight:600;
@@ -150,6 +150,77 @@ input,textarea,select{font-family:inherit;border:none;outline:none}
 }
 
 .payment-note{font-size:.82rem;color:#888;line-height:1.5}
+
+/* ── Selector de método de pago ── */
+.payment-method-section{
+    background:var(--white);padding:24px 28px;border-radius:16px;
+    box-shadow:0 4px 24px rgba(0,0,0,.04);margin-bottom:16px;
+}
+.payment-method-section h3{
+    font-family:var(--font-display);font-size:1rem;font-weight:600;
+    margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--gray-bg);
+}
+.payment-methods{display:flex;flex-direction:column;gap:10px}
+.payment-method-option{
+    display:flex;align-items:center;gap:14px;padding:14px 16px;
+    border:2px solid #eee;border-radius:12px;cursor:pointer;
+    transition:border-color .25s,background .25s;
+}
+.payment-method-option:hover{border-color:var(--pink-light)}
+.payment-method-option.active{border-color:var(--pink-deep);background:rgba(246,175,203,.06)}
+.payment-method-option input{display:none}
+.method-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+    background:var(--gray-bg);border-radius:8px;flex-shrink:0}
+.transfer-icon{background:#eafaf1}
+.method-info{display:flex;flex-direction:column;gap:2px}
+.method-name{font-size:.88rem;font-weight:700;color:var(--dark)}
+.method-sub{font-size:.75rem;color:#888}
+.method-discount{color:#27ae60;font-weight:700}
+
+/* ── Fila de descuento en resumen ── */
+.summary-discount-row{
+    display:flex;justify-content:space-between;
+    font-size:.88rem;padding-top:10px;margin-top:4px;
+    border-top:1px dashed #eee;color:#27ae60;
+}
+.summary-discount-row.hidden{display:none}
+.discount-amount{font-weight:700}
+
+/* ── Datos bancarios ── */
+.transfer-data{
+    background:#eafaf1;border:1.5px solid #a9dfbf;
+    padding:20px 24px;border-radius:16px;margin-bottom:16px;
+}
+.transfer-data.hidden{display:none}
+.transfer-data h4{
+    font-family:var(--font-display);font-size:1rem;font-weight:600;
+    color:#1e8449;margin-bottom:14px;
+}
+.bank-detail{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:7px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:.85rem;
+}
+.bank-detail:last-of-type{border-bottom:none}
+.bank-detail span{color:#555;flex-shrink:0;margin-right:10px}
+.bank-detail strong{font-weight:700;word-break:break-all;text-align:right}
+.bank-detail.copyable{gap:8px}
+.copy-btn{
+    background:none;border:none;cursor:pointer;padding:4px;
+    color:#27ae60;flex-shrink:0;display:flex;align-items:center;
+    border-radius:4px;transition:background .2s;
+}
+.copy-btn:hover{background:rgba(39,174,96,.15)}
+.transfer-instructions{
+    font-size:.8rem;color:#555;margin-top:14px;margin-bottom:14px;
+    line-height:1.6;
+}
+.btn-whatsapp{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:13px;background:#25D366;color:#fff;
+    border-radius:50px;font-size:.88rem;font-weight:700;
+    text-decoration:none;transition:background .3s;
+}
+.btn-whatsapp:hover{background:#1ebe5d}
 
 .checkout-footer{
     background:var(--dark);color:rgba(255,255,255,.6);

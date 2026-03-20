@@ -94,7 +94,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pf-category').value = product ? product.category : '';
         document.getElementById('pf-badge').value = product ? (product.badge || '') : '';
         document.getElementById('pf-description').value = product ? product.description : '';
-        document.getElementById('pf-stock').value = product ? (product.stock || 0) : 0;
+        // Stock por talle (nuevo: objeto; viejo: número)
+        const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        allSizes.forEach(s => {
+            const stockVal = product
+                ? (typeof product.stock === 'object' ? (product.stock[s] || 0) : (product.stock || 0))
+                : 0;
+            document.getElementById('pf-stock-' + s).value = stockVal;
+        });
         document.getElementById('pf-features').value = product ? (product.features || []).join('\n') : '';
         document.getElementById('pf-image-files').value = '';
 
@@ -196,10 +203,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        const stockBySizeData = {};
+        allSizes.forEach(s => {
+            stockBySizeData[s] = parseInt(document.getElementById('pf-stock-' + s).value) || 0;
+        });
+
         const data = {
             name, price, category, description,
             badge: document.getElementById('pf-badge').value.trim(),
-            stock: parseInt(document.getElementById('pf-stock').value) || 0,
+            stock: stockBySizeData,
             image: imageUrls[0] || '',
             images: imageUrls,
             sizes, features,
@@ -242,7 +255,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td><strong>${escapeHtml(p.name)}</strong></td>
                     <td>${escapeHtml(p.category)}</td>
                     <td>$${p.price ? p.price.toLocaleString('es-AR') : '0'}</td>
-                    <td>${p.stock != null && p.stock < 5 ? '<span class="low-stock-badge">⚠ ' + p.stock + '</span>' : (p.stock != null ? p.stock : 0)}</td>
+                    <td>${(() => {
+                        if (!p.stock && p.stock !== 0) return 0;
+                        if (typeof p.stock === 'object') {
+                            const total = Object.values(p.stock).reduce((a, b) => a + b, 0);
+                            const lowSizes = Object.entries(p.stock).filter(([,v]) => v < 3 && v >= 0).map(([k]) => k);
+                            const badge = lowSizes.length ? '<span class="low-stock-badge">⚠ ' + lowSizes.join(',') + '</span> ' : '';
+                            return badge + 'Total: ' + total;
+                        }
+                        return p.stock < 5 ? '<span class="low-stock-badge">⚠ ' + p.stock + '</span>' : p.stock;
+                    })()}</td>
                     <td>${(p.sizes || []).join(', ')}</td>
                     <td>
                         <div class="action-btns">
