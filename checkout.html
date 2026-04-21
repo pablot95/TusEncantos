@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="checkout.css">
+    <link rel="stylesheet" href="checkout.css?v=2">
 </head>
 <body>
 
@@ -32,6 +32,10 @@
             <div class="checkout-header">
                 <h1>Finalizar Compra</h1>
                 <p>Completá tus datos para continuar con el pago</p>
+                <div class="checkout-free-shipping-note">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    ¡Envío <strong>GRATIS</strong> en compras desde $150.000! En compras menores, el costo de envío se acuerda con el vendedor.
+                </div>
             </div>
 
             <div class="checkout-grid">
@@ -62,6 +66,42 @@
                             <div class="form-group">
                                 <label for="ship-address">Dirección *</label>
                                 <input type="text" id="ship-address" name="shipAddress" required autocomplete="street-address">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="ship-city">Ciudad / Localidad *</label>
+                                    <input type="text" id="ship-city" name="shipCity" required autocomplete="address-level2">
+                                </div>
+                                <div class="form-group">
+                                    <label for="ship-province">Provincia *</label>
+                                    <select id="ship-province" name="shipProvince" required>
+                                        <option value="">Seleccioná</option>
+                                        <option value="Buenos Aires">Buenos Aires</option>
+                                        <option value="CABA">CABA</option>
+                                        <option value="Catamarca">Catamarca</option>
+                                        <option value="Chaco">Chaco</option>
+                                        <option value="Chubut">Chubut</option>
+                                        <option value="Córdoba">Córdoba</option>
+                                        <option value="Corrientes">Corrientes</option>
+                                        <option value="Entre Ríos">Entre Ríos</option>
+                                        <option value="Formosa">Formosa</option>
+                                        <option value="Jujuy">Jujuy</option>
+                                        <option value="La Pampa">La Pampa</option>
+                                        <option value="La Rioja">La Rioja</option>
+                                        <option value="Mendoza">Mendoza</option>
+                                        <option value="Misiones">Misiones</option>
+                                        <option value="Neuquén">Neuquén</option>
+                                        <option value="Río Negro">Río Negro</option>
+                                        <option value="Salta">Salta</option>
+                                        <option value="San Juan">San Juan</option>
+                                        <option value="San Luis">San Luis</option>
+                                        <option value="Santa Cruz">Santa Cruz</option>
+                                        <option value="Santa Fe">Santa Fe</option>
+                                        <option value="Santiago del Estero">Santiago del Estero</option>
+                                        <option value="Tierra del Fuego">Tierra del Fuego</option>
+                                        <option value="Tucumán">Tucumán</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="ship-message">Mensaje (opcional)</label>
@@ -115,6 +155,10 @@
                         <div class="summary-discount-row hidden" id="summary-discount-row">
                             <span>Descuento transferencia (20%)</span>
                             <span id="summary-discount-amount" class="discount-amount">-$0</span>
+                        </div>
+                        <div class="summary-shipping-row" id="summary-shipping-row">
+                            <span id="shipping-label">Envío</span>
+                            <span id="summary-shipping-price">Seleccioná provincia</span>
                         </div>
                         <div class="summary-total">
                             <span>Total</span>

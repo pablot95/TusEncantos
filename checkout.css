@@ -50,6 +50,15 @@ input,textarea,select{font-family:inherit;border:none;outline:none}
 }
 .checkout-header p{font-size:.95rem;color:#888}
 
+/* ── Nota envío gratis en checkout ── */
+.checkout-free-shipping-note{
+    display:inline-flex;align-items:center;gap:8px;
+    margin-top:14px;padding:10px 22px;
+    background:#eafaf1;color:#1e8449;border:1.5px solid #a9dfbf;
+    border-radius:50px;font-size:.85rem;letter-spacing:.3px;
+}
+.checkout-free-shipping-note svg{stroke:#27ae60;flex-shrink:0}
+
 .checkout-grid{
     display:grid;grid-template-columns:1fr 400px;gap:40px;align-items:start;
 }
@@ -185,6 +194,31 @@ input,textarea,select{font-family:inherit;border:none;outline:none}
 }
 .summary-discount-row.hidden{display:none}
 .discount-amount{font-weight:700}
+
+/* ── Fila de envío en resumen ── */
+.summary-shipping-row{
+    display:flex;justify-content:space-between;
+    font-size:.88rem;padding-top:8px;margin-top:4px;
+    border-top:1px dashed #eee;color:var(--dark);
+}
+.summary-shipping-row .shipping-free{
+    font-weight:800;color:#27ae60;
+}
+.summary-shipping-row .shipping-pending{
+    font-size:.8rem;color:#999;font-style:italic;
+}
+
+/* ── Select de provincia ── */
+.form-group select{
+    width:100%;padding:14px 16px;background:var(--gray-bg);
+    border-radius:10px;font-size:.9rem;transition:box-shadow .3s,border .3s;
+    border:2px solid transparent;color:var(--dark);
+    appearance:auto;cursor:pointer;
+}
+.form-group select:focus{
+    box-shadow:0 0 0 3px rgba(246,175,203,.3);border-color:var(--pink);background:var(--white);
+}
+.form-group select.error{border-color:#e74c3c}
 
 /* ── Datos bancarios ── */
 .transfer-data{

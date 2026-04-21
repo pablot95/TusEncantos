@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="product.css">
+    <link rel="stylesheet" href="product.css?v=2">
 </head>
 <body>
 
@@ -67,6 +67,7 @@
                     <h1 id="product-title"></h1>
                     <span class="product-category-tag" id="product-category-tag"></span>
                     <p class="product-price-main" id="product-price"></p>
+                    <p class="product-transfer-price" id="product-transfer-price"></p>
                     <div class="low-stock-alert" id="low-stock-alert" style="display:none">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         <span>¡Últimas unidades disponibles!</span>
@@ -75,6 +76,10 @@
                     <div class="size-selector">
                         <label>Seleccioná tu talle</label>
                         <div class="size-options" id="size-options"></div>
+                    </div>
+                    <div class="color-selector" id="color-selector" style="display:none">
+                        <label>Seleccioná el color</label>
+                        <div class="color-options" id="color-options"></div>
                     </div>
                     <div class="qty-selector">
                         <label>Cantidad</label>
@@ -160,10 +165,48 @@
             document.getElementById('product-title').textContent = product.name;
             document.getElementById('product-category-tag').textContent = product.category;
             document.getElementById('product-price').textContent = '$' + product.price.toLocaleString('es-AR');
+            const transferPrice = Math.round(product.price * 0.80);
+            document.getElementById('product-transfer-price').innerHTML = '<span class="transfer-badge">20% OFF</span> $' + transferPrice.toLocaleString('es-AR') + ' <span class="transfer-label">pagando con transferencia</span>';
 
-            // Verificación de stock
-            const stock = product.stock != null ? product.stock : 0;
-            if (stock === 0) {
+            // Verificación de stock (soporta objeto por talle, objeto anidado talle→color, y número legacy)
+            const stockRaw = product.stock != null ? product.stock : 0;
+            const stockIsObject = typeof stockRaw === 'object' && stockRaw !== null;
+
+            function isNestedStock() {
+                if (!stockIsObject) return false;
+                return Object.values(stockRaw).some(v => typeof v === 'object' && v !== null);
+            }
+            const nestedStock = isNestedStock();
+
+            function getStockForSizeColor(size, color) {
+                if (!stockIsObject) return stockRaw ?? 0;
+                const sizeVal = stockRaw[size];
+                if (sizeVal == null) return 0;
+                if (typeof sizeVal === 'object') {
+                    if (color) return sizeVal[color] ?? 0;
+                    // Sin color: suma total para ese talle
+                    return Object.values(sizeVal).reduce((a, b) => a + b, 0);
+                }
+                return sizeVal ?? 0;
+            }
+            function getStockForSize(size) {
+                return getStockForSizeColor(size, selectedColor);
+            }
+
+            let totalStock = 0;
+            if (!stockIsObject) {
+                totalStock = stockRaw ?? 0;
+            } else {
+                Object.values(stockRaw).forEach(v => {
+                    if (typeof v === 'object' && v !== null) {
+                        Object.values(v).forEach(n => { totalStock += (n || 0); });
+                    } else {
+                        totalStock += (v || 0);
+                    }
+                });
+            }
+
+            if (totalStock === 0) {
                 const alertEl = document.getElementById('low-stock-alert');
                 alertEl.style.display = 'flex';
                 alertEl.className = 'low-stock-alert out-of-stock';
@@ -172,22 +215,70 @@
                 document.getElementById('btn-add-cart').innerHTML = '<span>Sin Stock</span>';
                 document.getElementById('btn-buy-now').disabled = true;
                 document.getElementById('btn-buy-now').innerHTML = '<span>Sin Stock</span>';
-            } else if (stock < 5) {
+            } else if (totalStock < 5) {
                 const alertEl = document.getElementById('low-stock-alert');
                 alertEl.style.display = 'flex';
-                alertEl.querySelector('span').textContent = stock === 1 ? '¡Última unidad disponible!' : '¡Solo quedan ' + stock + ' unidades!';
+                alertEl.querySelector('span').textContent = totalStock === 1 ? '¡Última unidad disponible!' : '¡Solo quedan ' + totalStock + ' unidades!';
             }
 
             document.getElementById('product-description').textContent = product.description;
 
             // Talles
             const sizeOptionsEl = document.getElementById('size-options');
-            (product.sizes || SIZES).forEach(size => {
-                const btn = document.createElement('button');
-                btn.className = 'size-btn';
-                btn.textContent = size;
-                sizeOptionsEl.appendChild(btn);
-            });
+            let selectedColor = '';  // se declara aquí para que renderSizeButtons lo use
+            function renderSizeButtons() {
+                sizeOptionsEl.innerHTML = '';
+                (product.sizes || SIZES).forEach(size => {
+                    const btn = document.createElement('button');
+                    btn.className = 'size-btn';
+                    btn.textContent = size;
+                    const sizeStock = getStockForSize(size);
+                    if (sizeStock === 0) {
+                        btn.disabled = true;
+                        btn.classList.add('out-of-stock');
+                    }
+                    sizeOptionsEl.appendChild(btn);
+                });
+                // Reactivar listeners de talle
+                sizeOptionsEl.querySelectorAll('.size-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (btn.disabled) return;
+                        sizeOptionsEl.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        selectedSize = btn.textContent.trim();
+                        updateStockForSelectedState();
+                    });
+                });
+            }
+            renderSizeButtons();
+
+            // Colores (para todas las categorías que tengan colores definidos)
+            if (product.colors && product.colors.length > 0) {
+                const colorSelectorEl = document.getElementById('color-selector');
+                colorSelectorEl.style.display = '';
+                const colorOptionsEl = document.getElementById('color-options');
+                product.colors.forEach(color => {
+                    const btn = document.createElement('button');
+                    btn.className = 'size-btn color-btn';
+                    btn.textContent = color;
+                    btn.addEventListener('click', () => {
+                        colorOptionsEl.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        selectedColor = color;
+                        // Si el stock es anidado, actualizar botones de talle al cambiar color
+                        if (nestedStock) {
+                            renderSizeButtons();
+                            // Deseleccionar talle si ya no tiene stock con nuevo color
+                            if (selectedSize) {
+                                const newStock = getStockForSize(selectedSize);
+                                if (newStock === 0) selectedSize = '';
+                            }
+                        }
+                        updateStockForSelectedState();
+                    });
+                    colorOptionsEl.appendChild(btn);
+                });
+            }
 
             // Features
             const featuresEl = document.getElementById('product-features');
@@ -207,15 +298,20 @@
             document.getElementById('product-loading').style.display = 'none';
             document.getElementById('product-detail').style.display = 'grid';
 
-            // --- Lógica de talle y carrito ---
+            // --- Lógica de talle, color y carrito ---
             let selectedSize = '';
-            sizeOptionsEl.querySelectorAll('.size-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    sizeOptionsEl.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    selectedSize = btn.textContent.trim();
-                });
-            });
+            const qtyInput = document.getElementById('qty-input');
+            let currentSizeStock = totalStock;
+
+            function updateStockForSelectedState() {
+                if (selectedSize) {
+                    currentSizeStock = getStockForSize(selectedSize);
+                } else {
+                    currentSizeStock = totalStock;
+                }
+                qtyInput.max = currentSizeStock > 0 ? currentSizeStock : 0;
+                qtyInput.value = Math.min(parseInt(qtyInput.value) || 1, currentSizeStock || 1);
+            }
 
             const productData = {
                 id: productId,
@@ -225,28 +321,33 @@
                 category: product.category
             };
 
-            // Limitar cantidad al stock disponible
-            const maxQty = stock > 0 ? stock : 0;
-            const qtyInput = document.getElementById('qty-input');
-            if (maxQty > 0) qtyInput.max = maxQty;
-
             document.getElementById('btn-add-cart').addEventListener('click', () => {
-                if (stock === 0) { showToast('Producto sin stock'); return; }
+                if (totalStock === 0) { showToast('Producto sin stock'); return; }
                 if (!selectedSize) { showToast('Seleccioná un talle'); return; }
+                if (product.colors && product.colors.length > 0 && !selectedColor) {
+                    showToast('Seleccioná un color'); return;
+                }
+                const sizeStock = getStockForSize(selectedSize);
+                if (sizeStock === 0) { showToast('Sin stock en talle ' + selectedSize); return; }
                 const qty = parseInt(qtyInput.value) || 1;
-                if (qty > stock) { showToast('Solo hay ' + stock + ' unidades disponibles'); return; }
+                if (qty > sizeStock) { showToast('Solo hay ' + sizeStock + ' unidades en talle ' + selectedSize); return; }
                 for (let i = 0; i < qty; i++) {
-                    cart.add({ ...productData, size: selectedSize });
+                    cart.add({ ...productData, size: selectedSize, color: selectedColor || '' });
                 }
             });
 
             document.getElementById('btn-buy-now').addEventListener('click', () => {
-                if (stock === 0) { showToast('Producto sin stock'); return; }
+                if (totalStock === 0) { showToast('Producto sin stock'); return; }
                 if (!selectedSize) { showToast('Seleccioná un talle'); return; }
+                if (product.colors && product.colors.length > 0 && !selectedColor) {
+                    showToast('Seleccioná un color'); return;
+                }
+                const sizeStock = getStockForSize(selectedSize);
+                if (sizeStock === 0) { showToast('Sin stock en talle ' + selectedSize); return; }
                 const qty = parseInt(qtyInput.value) || 1;
-                if (qty > stock) { showToast('Solo hay ' + stock + ' unidades disponibles'); return; }
+                if (qty > sizeStock) { showToast('Solo hay ' + sizeStock + ' unidades en talle ' + selectedSize); return; }
                 for (let i = 0; i < qty; i++) {
-                    cart.add({ ...productData, size: selectedSize });
+                    cart.add({ ...productData, size: selectedSize, color: selectedColor || '' });
                 }
                 window.location.href = 'checkout.html';
             });
@@ -257,8 +358,8 @@
             });
             document.getElementById('qty-plus').addEventListener('click', () => {
                 const current = parseInt(qtyInput.value);
-                if (current < maxQty) qtyInput.value = current + 1;
-                else showToast('Solo hay ' + stock + ' unidades disponibles');
+                if (current < currentSizeStock) qtyInput.value = current + 1;
+                else showToast('Solo hay ' + currentSizeStock + ' unidades disponibles en talle ' + (selectedSize || ''));
             });
 
             // Gallery zoom
@@ -289,7 +390,7 @@
                 this.updateUI();
             },
             add(product) {
-                const existing = this.items.find(i => i.id === product.id && i.size === product.size);
+                const existing = this.items.find(i => i.id === product.id && i.size === product.size && i.color === product.color);
                 if (existing) { existing.qty += 1; }
                 else { this.items.push({ ...product, qty: 1 }); }
                 this.save();
@@ -322,7 +423,7 @@
                             <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" width="70" height="85">
                             <div class="cart-item-info">
                                 <h4>${escapeHtml(item.name)}</h4>
-                                <p class="cart-item-size">Talle: ${escapeHtml(item.size)} — Cant: ${item.qty}</p>
+                                <p class="cart-item-size">Talle: ${escapeHtml(item.size)}${item.color ? ' — Color: ' + escapeHtml(item.color) : ''} — Cant: ${item.qty}</p>
                                 <p class="cart-item-price">$${(item.price * item.qty).toLocaleString('es-AR')}</p>
                             </div>
                             <button class="cart-item-remove" data-index="${index}">✕</button>

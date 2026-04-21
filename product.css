@@ -222,7 +222,30 @@ button{border:none;background:none;cursor:pointer;font-family:inherit}
     font-size:2rem;
     font-weight:700;
     color:var(--dark);
-    margin-bottom:28px;
+    margin-bottom:8px;
+}
+.product-transfer-price{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:1.1rem;
+    font-weight:700;
+    color:#2e7d32;
+    margin-bottom:20px;
+}
+.transfer-badge{
+    background:#2e7d32;
+    color:#fff;
+    font-size:.72rem;
+    font-weight:800;
+    padding:3px 8px;
+    border-radius:50px;
+    letter-spacing:.5px;
+}
+.transfer-label{
+    font-size:.85rem;
+    font-weight:400;
+    color:#555;
 }
 
 .low-stock-alert{
@@ -293,6 +316,39 @@ button{border:none;background:none;cursor:pointer;font-family:inherit}
     background:var(--pink-deep);
     color:var(--white);
     transform:scale(1.05);
+}
+.size-btn.out-of-stock{opacity:.35;cursor:not-allowed;text-decoration:line-through}
+
+.color-selector{margin-bottom:28px}
+.color-selector label{
+    font-size:.8rem;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    display:block;
+    margin-bottom:12px;
+}
+.color-options{display:flex;gap:10px;flex-wrap:wrap}
+.color-btn{
+    height:40px;
+    padding:0 16px;
+    border:1.5px solid #ddd;
+    border-radius:20px;
+    font-size:.82rem;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all .3s var(--ease);
+    cursor:pointer;
+    background:var(--white);
+    white-space:nowrap;
+}
+.color-btn:hover{border-color:var(--pink);color:var(--pink-deep)}
+.color-btn.selected{
+    border-color:var(--pink-deep);
+    background:var(--pink-deep);
+    color:var(--white);
 }
 
 .product-actions{

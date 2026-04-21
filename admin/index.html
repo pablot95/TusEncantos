@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="admin.css?v=2">
 </head>
 <body>
 
@@ -137,16 +137,17 @@
                         <label>Badge</label>
                         <input type="text" id="pf-badge" placeholder="Ej: Nuevo, Popular">
                     </div>
+                                    <div class="modal-field">
+                    <label>Talles disponibles</label>
+                    <div class="sizes-checkboxes" id="pf-sizes"></div>
+                </div>
+                <div class="modal-field" id="pf-colors-field" style="display:none">
+                    <label>Colores disponibles</label>
+                    <div class="sizes-checkboxes" id="pf-colors"></div>
+                </div>  
                     <div class="modal-field">
                         <label>Stock</label>
-                        <div class="stock-per-size" id="pf-stock-grid">
-                            <div class="stock-size-item"><span>XS</span><input type="number" id="pf-stock-XS" min="0" value="0"></div>
-                            <div class="stock-size-item"><span>S</span><input type="number" id="pf-stock-S" min="0" value="0"></div>
-                            <div class="stock-size-item"><span>M</span><input type="number" id="pf-stock-M" min="0" value="0"></div>
-                            <div class="stock-size-item"><span>L</span><input type="number" id="pf-stock-L" min="0" value="0"></div>
-                            <div class="stock-size-item"><span>XL</span><input type="number" id="pf-stock-XL" min="0" value="0"></div>
-                            <div class="stock-size-item"><span>XXL</span><input type="number" id="pf-stock-XXL" min="0" value="0"></div>
-                        </div>
+                        <div class="stock-per-size" id="pf-stock-grid"></div>
                     </div>
                 </div>
                 <div class="modal-field">
@@ -157,10 +158,6 @@
                     <label>Imágenes</label>
                     <input type="file" id="pf-image-files" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
                     <div id="pf-images-preview" class="images-preview"></div>
-                </div>
-                <div class="modal-field">
-                    <label>Talles disponibles</label>
-                    <div class="sizes-checkboxes" id="pf-sizes"></div>
                 </div>
                 <div class="modal-field">
                     <label>Características (una por línea)</label>

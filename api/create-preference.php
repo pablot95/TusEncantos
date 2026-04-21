@@ -32,9 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Leer body JSON
 $input = json_decode(file_get_contents('php://input'), true);
 
-if (!$input || empty($input['items']) || empty($input['orderId'])) {
+if (!$input || empty($input['orderId'])) {
     http_response_code(400);
-    echo json_encode(['error' => 'Datos incompletos. Se requiere items y orderId.']);
+    echo json_encode(['error' => 'Datos incompletos. Se requiere orderId.']);
     exit;
 }
 
@@ -45,31 +45,95 @@ if (empty($orderId)) {
     exit;
 }
 
-// Construir items para MercadoPago
+// ---- Leer precios desde Firestore (NUNCA confiar en los precios del cliente) ----
+// Los precios se obtienen directamente de la orden guardada en Firestore,
+// que fue creada con precios verificados desde la base de datos.
+define('FIREBASE_PROJECT', 'tusencantos-a09c4');
+define('FIREBASE_API_KEY', 'AIzaSyC8Za5OjMa1O2ScfXVSK6dI0ZIBhX_BdHk');
+
+$fsUrl = 'https://firestore.googleapis.com/v1/projects/' . FIREBASE_PROJECT
+       . '/databases/(default)/documents/orders/' . $orderId
+       . '?key=' . FIREBASE_API_KEY;
+
+$fsCh = curl_init($fsUrl);
+curl_setopt_array($fsCh, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT        => 10,
+    CURLOPT_SSL_VERIFYPEER => true,
+]);
+$fsBody     = curl_exec($fsCh);
+$fsHttpCode = curl_getinfo($fsCh, CURLINFO_HTTP_CODE);
+curl_close($fsCh);
+
+if ($fsHttpCode !== 200) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Orden no encontrada']);
+    exit;
+}
+
+$orderDoc = json_decode($fsBody, true);
+$fields   = $orderDoc['fields'] ?? [];
+
+// Helper para convertir valores del formato Firestore REST
+function fsVal($v) {
+    if (!is_array($v)) return null;
+    if (array_key_exists('stringValue',  $v)) return (string) $v['stringValue'];
+    if (array_key_exists('integerValue', $v)) return (int)    $v['integerValue'];
+    if (array_key_exists('doubleValue',  $v)) return (float)  $v['doubleValue'];
+    if (array_key_exists('booleanValue', $v)) return (bool)   $v['booleanValue'];
+    if (array_key_exists('mapValue',     $v)) {
+        $map = [];
+        foreach ($v['mapValue']['fields'] ?? [] as $k => $fv) $map[$k] = fsVal($fv);
+        return $map;
+    }
+    if (array_key_exists('arrayValue', $v)) {
+        $arr = [];
+        foreach ($v['arrayValue']['values'] ?? [] as $fv) $arr[] = fsVal($fv);
+        return $arr;
+    }
+    return null;
+}
+
+$orderStatus = fsVal($fields['status'] ?? []);
+if ($orderStatus !== 'pending') {
+    http_response_code(400);
+    echo json_encode(['error' => 'La orden no está disponible para pago']);
+    exit;
+}
+
+$orderItems = fsVal($fields['items'] ?? ['arrayValue' => ['values' => []]]);
+if (empty($orderItems) || !is_array($orderItems)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'La orden no tiene items']);
+    exit;
+}
+
+// Construir items para MercadoPago con los precios de Firestore
 $mpItems = [];
-foreach ($input['items'] as $item) {
-    if (empty($item['name']) || !isset($item['price']) || !isset($item['qty'])) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Cada item debe tener name, price y qty']);
-        exit;
-    }
+foreach ($orderItems as $item) {
+    $price = floatval($item['price'] ?? 0);
+    $qty   = intval($item['qty']   ?? 0);
+    $name  = trim($item['name']    ?? '');
 
-    $price = floatval($item['price']);
-    $qty = intval($item['qty']);
-
-    if ($price <= 0 || $qty <= 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Precio y cantidad deben ser positivos']);
-        exit;
-    }
+    if ($price <= 0 || $qty <= 0 || $name === '') continue;
 
     $mpItems[] = [
-        'title'       => mb_substr($item['name'], 0, 256),
+        'title'       => mb_substr($name, 0, 256),
         'quantity'    => $qty,
         'unit_price'  => $price,
         'currency_id' => 'ARS'
     ];
 }
+
+if (empty($mpItems)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'No se pudieron construir los items del pedido']);
+    exit;
+}
+
+// Email del comprador desde Firestore (no desde el cliente)
+$shipping   = fsVal($fields['shipping'] ?? []);
+$payerEmail = isset($shipping['email']) ? filter_var($shipping['email'], FILTER_SANITIZE_EMAIL) : '';
 
 // Crear preferencia via API REST de MercadoPago
 $preferenceData = [
@@ -85,11 +149,8 @@ $preferenceData = [
     'statement_descriptor' => 'TUS ENCANTOS',
 ];
 
-// Agregar payer si se envió email
-if (!empty($input['payerEmail'])) {
-    $preferenceData['payer'] = [
-        'email' => filter_var($input['payerEmail'], FILTER_SANITIZE_EMAIL)
-    ];
+if (!empty($payerEmail)) {
+    $preferenceData['payer'] = ['email' => $payerEmail];
 }
 
 $ch = curl_init(MP_API_BASE . '/checkout/preferences');

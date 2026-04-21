@@ -69,18 +69,151 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function initSizesCheckboxes() {
-        const container = document.getElementById('pf-sizes');
-        container.innerHTML = '';
-        ['XS', ...SIZES].forEach(s => {
+    function getSizesForCategory(category) {
+        if (category === 'Jeans') return JEAN_SIZES;
+        return ['XS', ...SIZES];
+    }
+
+    // Construye la grilla de stock. Si hay colores seleccionados → matriz talle×color.
+    function buildStockGrid(sizes, colors, existingStock) {
+        const stockGrid = document.getElementById('pf-stock-grid');
+        stockGrid.innerHTML = '';
+
+        if (colors && colors.length > 0) {
+            // --- Matriz: filas = talles, columnas = colores ---
+            const table = document.createElement('div');
+            table.className = 'stock-matrix';
+
+            // Fila de encabezado
+            const headerRow = document.createElement('div');
+            headerRow.className = 'stock-matrix-row stock-matrix-header';
+            const cornerCell = document.createElement('div');
+            cornerCell.className = 'stock-matrix-cell stock-corner';
+            headerRow.appendChild(cornerCell);
+            colors.forEach(c => {
+                const cell = document.createElement('div');
+                cell.className = 'stock-matrix-cell stock-col-label';
+                cell.textContent = c;
+                headerRow.appendChild(cell);
+            });
+            table.appendChild(headerRow);
+
+            // Filas de talles
+            sizes.forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'stock-matrix-row';
+                const sizeCell = document.createElement('div');
+                sizeCell.className = 'stock-matrix-cell stock-row-label';
+                sizeCell.textContent = s;
+                row.appendChild(sizeCell);
+                colors.forEach(c => {
+                    let val = 0;
+                    if (existingStock && typeof existingStock[s] === 'object' && existingStock[s] !== null) {
+                        val = existingStock[s][c] || 0;
+                    }
+                    const cell = document.createElement('div');
+                    cell.className = 'stock-matrix-cell';
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = '0';
+                    input.value = val;
+                    input.dataset.size = s;
+                    input.dataset.color = c;
+                    cell.appendChild(input);
+                    row.appendChild(cell);
+                });
+                table.appendChild(row);
+            });
+            stockGrid.appendChild(table);
+        } else {
+            // --- Lista simple: talle → número ---
+            sizes.forEach(s => {
+                let val = 0;
+                if (existingStock) {
+                    const sv = existingStock[s];
+                    if (typeof sv === 'number') val = sv;
+                    else if (typeof sv === 'object' && sv !== null) {
+                        // Si hay stock anidado pero no hay colores seleccionados, sumar total
+                        val = Object.values(sv).reduce((a, b) => a + b, 0);
+                    }
+                }
+                const div = document.createElement('div');
+                div.className = 'stock-size-item';
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.min = '0';
+                input.value = val;
+                input.dataset.size = s;
+                div.innerHTML = `<span>${s}</span>`;
+                div.appendChild(input);
+                stockGrid.appendChild(div);
+            });
+        }
+    }
+
+    function getSelectedColors() {
+        const checked = [];
+        document.querySelectorAll('#pf-colors input:checked').forEach(cb => checked.push(cb.value));
+        return checked;
+    }
+
+    function getSelectedSizes() {
+        const checked = [];
+        document.querySelectorAll('#pf-sizes input:checked').forEach(cb => checked.push(cb.value));
+        return checked;
+    }
+
+    function updateSizesForCategory(category) {
+        const sizes = getSizesForCategory(category);
+
+        // Actualizar checkboxes de talles
+        const sizesContainer = document.getElementById('pf-sizes');
+        sizesContainer.innerHTML = '';
+        sizes.forEach(s => {
             const label = document.createElement('label');
             label.innerHTML = `<input type="checkbox" value="${s}"> ${s}`;
-            container.appendChild(label);
+            sizesContainer.appendChild(label);
         });
+
+        // Colores disponibles para TODAS las categorías
+        const colorsField = document.getElementById('pf-colors-field');
+        colorsField.style.display = '';
+        const colorsContainer = document.getElementById('pf-colors');
+        colorsContainer.innerHTML = '';
+        COLORS.forEach(c => {
+            const label = document.createElement('label');
+            label.innerHTML = `<input type="checkbox" value="${c}" class="pf-color-cb"> ${c}`;
+            colorsContainer.appendChild(label);
+        });
+
+        // Grilla de stock vacía al inicio (ningún talle ni color seleccionado aún)
+        buildStockGrid([], [], null);
     }
 
     initCategorySelect();
-    initSizesCheckboxes();
+    updateSizesForCategory('');
+
+    // Cuando cambia la categoría, actualizar talles/stock/colores
+    document.getElementById('pf-category').addEventListener('change', (e) => {
+        updateSizesForCategory(e.target.value);
+    });
+
+    function rebuildStockGrid() {
+        const selectedSizes = getSelectedSizes();
+        const selectedColors = getSelectedColors();
+        const currentStock = collectStockFromGrid();
+        buildStockGrid(selectedSizes, selectedColors, currentStock);
+    }
+
+    // Cuando cambian los talles, reconstruir grilla de stock
+    document.getElementById('pf-sizes').addEventListener('change', () => {
+        rebuildStockGrid();
+    });
+
+    // Cuando cambian los colores, reconstruir grilla de stock
+    document.getElementById('pf-colors').addEventListener('change', () => {
+        rebuildStockGrid();
+    });
 
     document.getElementById('btn-add-product').addEventListener('click', () => openProductModal());
     document.getElementById('modal-close').addEventListener('click', () => closeProductModal());
@@ -91,39 +224,43 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pf-id').value = docId || '';
         document.getElementById('pf-name').value = product ? product.name : '';
         document.getElementById('pf-price').value = product ? product.price : '';
-        document.getElementById('pf-category').value = product ? product.category : '';
         document.getElementById('pf-badge').value = product ? (product.badge || '') : '';
         document.getElementById('pf-description').value = product ? product.description : '';
-        // Stock por talle (nuevo: objeto; viejo: número)
-        const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-        allSizes.forEach(s => {
-            const stockVal = product
-                ? (typeof product.stock === 'object' ? (product.stock[s] || 0) : (product.stock || 0))
-                : 0;
-            document.getElementById('pf-stock-' + s).value = stockVal;
+
+        // Actualizar talles/stock/colores según categoría ANTES de asignar valores
+        const category = product ? product.category : '';
+        document.getElementById('pf-category').value = category;
+        updateSizesForCategory(category);
+
+        // Marcar colores del producto (para TODAS las categorías)
+        const productColors = product ? (product.colors || []) : [];
+        document.querySelectorAll('#pf-colors input').forEach(cb => {
+            cb.checked = productColors.includes(cb.value);
         });
+
+        // Reconstruir grilla de stock con los talles y colores del producto y el stock existente
+        const productSizes = product ? (product.sizes || []) : [];
+        buildStockGrid(productSizes, productColors, product ? product.stock : null);
+
         document.getElementById('pf-features').value = product ? (product.features || []).join('\n') : '';
         document.getElementById('pf-image-files').value = '';
 
-        // Show existing images preview
+        // Arrays de estado del modal
+        const existingUrls = product
+            ? (product.images && product.images.length > 0 ? [...product.images] : (product.image ? [product.image] : []))
+            : [];
+        window._adminKeptUrls = [...existingUrls];
+        window._adminPendingFiles = [];
+
+        // Preview de imágenes existentes con botón eliminar
         const previewContainer = document.getElementById('pf-images-preview');
         previewContainer.innerHTML = '';
-        if (product && product.images && product.images.length > 0) {
-            product.images.forEach(url => {
-                const img = document.createElement('img');
-                img.src = url.startsWith('http') ? url : '../' + url;
-                img.alt = 'Preview';
-                previewContainer.appendChild(img);
-            });
-        } else if (product && product.image) {
-            const img = document.createElement('img');
-            img.src = product.image.startsWith('http') ? product.image : '../' + product.image;
-            img.alt = 'Preview';
-            previewContainer.appendChild(img);
-        }
+        existingUrls.forEach(url => {
+            addExistingImageThumb(previewContainer, url);
+        });
 
-        const sizesChecks = document.querySelectorAll('#pf-sizes input');
-        sizesChecks.forEach(cb => {
+        // Talles disponibles
+        document.querySelectorAll('#pf-sizes input').forEach(cb => {
             cb.checked = product ? (product.sizes || []).includes(cb.value) : false;
         });
 
@@ -133,21 +270,82 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeProductModal() {
         productModal.classList.add('hidden');
         productForm.reset();
+        updateSizesForCategory('');
+    }
+
+    // Lee los valores de la grilla de stock (simple o matriz)
+    function collectStockFromGrid() {
+        const stockData = {};
+        const colorInputs = document.querySelectorAll('#pf-stock-grid [data-color]');
+        if (colorInputs.length > 0) {
+            // Matriz talle×color
+            colorInputs.forEach(input => {
+                const size = input.dataset.size;
+                const color = input.dataset.color;
+                if (!stockData[size]) stockData[size] = {};
+                stockData[size][color] = parseInt(input.value) || 0;
+            });
+        } else {
+            // Simple: solo por talle
+            document.querySelectorAll('#pf-stock-grid [data-size]').forEach(input => {
+                stockData[input.dataset.size] = parseInt(input.value) || 0;
+            });
+        }
+        return stockData;
+    }
+
+    function addExistingImageThumb(container, url) {
+        const wrap = document.createElement('div');
+        wrap.className = 'img-thumb-wrap';
+        wrap.dataset.url = url;
+        const img = document.createElement('img');
+        img.src = url.startsWith('http') ? url : '../' + url;
+        img.alt = 'Preview';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'img-thumb-remove';
+        btn.title = 'Eliminar foto';
+        btn.textContent = '✕';
+        btn.addEventListener('click', () => {
+            window._adminKeptUrls = window._adminKeptUrls.filter(u => u !== url);
+            wrap.remove();
+        });
+        wrap.appendChild(img);
+        wrap.appendChild(btn);
+        container.appendChild(wrap);
+    }
+
+    function addNewImageThumb(container, file) {
+        const wrap = document.createElement('div');
+        wrap.className = 'img-thumb-wrap';
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const img = document.createElement('img');
+            img.src = ev.target.result;
+            img.alt = 'Preview';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'img-thumb-remove';
+            btn.title = 'Eliminar foto';
+            btn.textContent = '✕';
+            btn.addEventListener('click', () => {
+                window._adminPendingFiles = window._adminPendingFiles.filter(f => f !== file);
+                wrap.remove();
+            });
+            wrap.appendChild(img);
+            wrap.appendChild(btn);
+            container.appendChild(wrap);
+        };
+        reader.readAsDataURL(file);
+        window._adminPendingFiles.push(file);
     }
 
     // Image files preview (append, don't replace)
     document.getElementById('pf-image-files').addEventListener('change', (e) => {
         const previewContainer = document.getElementById('pf-images-preview');
-        Array.from(e.target.files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = document.createElement('img');
-                img.src = ev.target.result;
-                img.alt = 'Preview';
-                previewContainer.appendChild(img);
-            };
-            reader.readAsDataURL(file);
-        });
+        Array.from(e.target.files).forEach(file => addNewImageThumb(previewContainer, file));
+        // Reset input so the same file can be re-selected if needed
+        e.target.value = '';
     });
 
     // Save product
@@ -171,14 +369,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const features = document.getElementById('pf-features').value
             .split('\n').map(f => f.trim()).filter(f => f);
 
-        let imageUrls = [];
+        // URLs existentes conservadas + nuevos archivos a subir
+        let imageUrls = [...(window._adminKeptUrls || [])];
+        const filesToUpload = window._adminPendingFiles || [];
 
-        // Subir imágenes al servidor
-        const imageFiles = document.getElementById('pf-image-files').files;
-        if (imageFiles.length > 0) {
+        if (filesToUpload.length > 0) {
             try {
                 showToast('Subiendo imágenes...', 'info');
-                for (const file of imageFiles) {
+                for (const file of filesToUpload) {
                     const formData = new FormData();
                     formData.append('image', file);
                     formData.append('secret', 'TusEncantosUpload2026!');
@@ -193,21 +391,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Conservar las imágenes existentes y agregar las nuevas
-        if (docId) {
-            const existingDoc = await db.collection('products').doc(docId).get();
-            if (existingDoc.exists) {
-                const existingData = existingDoc.data();
-                const existingImages = existingData.images || (existingData.image ? [existingData.image] : []);
-                imageUrls = [...existingImages, ...imageUrls];
-            }
-        }
+        const stockBySizeData = collectStockFromGrid();
 
-        const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-        const stockBySizeData = {};
-        allSizes.forEach(s => {
-            stockBySizeData[s] = parseInt(document.getElementById('pf-stock-' + s).value) || 0;
-        });
+        // Colores (todas las categorías)
+        const colors = [];
+        document.querySelectorAll('#pf-colors input:checked').forEach(cb => colors.push(cb.value));
 
         const data = {
             name, price, category, description,
@@ -215,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stock: stockBySizeData,
             image: imageUrls[0] || '',
             images: imageUrls,
-            sizes, features,
+            sizes, features, colors,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
@@ -258,14 +446,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${(() => {
                         if (!p.stock && p.stock !== 0) return 0;
                         if (typeof p.stock === 'object') {
-                            const total = Object.values(p.stock).reduce((a, b) => a + b, 0);
-                            const lowSizes = Object.entries(p.stock).filter(([,v]) => v < 3 && v >= 0).map(([k]) => k);
-                            const badge = lowSizes.length ? '<span class="low-stock-badge">⚠ ' + lowSizes.join(',') + '</span> ' : '';
+                            let total = 0;
+                            const lowItems = [];
+                            Object.entries(p.stock).forEach(([sizeKey, sizeVal]) => {
+                                if (typeof sizeVal === 'object' && sizeVal !== null) {
+                                    // Stock anidado: talle → { color: n }
+                                    Object.entries(sizeVal).forEach(([colorKey, n]) => {
+                                        total += n;
+                                        if (n < 3 && n >= 0) lowItems.push(sizeKey + '/' + colorKey);
+                                    });
+                                } else {
+                                    total += sizeVal;
+                                    if (sizeVal < 3 && sizeVal >= 0) lowItems.push(sizeKey);
+                                }
+                            });
+                            const badge = lowItems.length ? '<span class="low-stock-badge">⚠ ' + lowItems.slice(0, 4).join(', ') + (lowItems.length > 4 ? '...' : '') + '</span> ' : '';
                             return badge + 'Total: ' + total;
                         }
                         return p.stock < 5 ? '<span class="low-stock-badge">⚠ ' + p.stock + '</span>' : p.stock;
                     })()}</td>
-                    <td>${(p.sizes || []).join(', ')}</td>
+                    <td>${(p.sizes || []).join(', ')}${p.colors && p.colors.length ? '<br><small style="color:#888">Colores: ' + escapeHtml(p.colors.join(', ')) + '</small>' : ''}</td>
                     <td>
                         <div class="action-btns">
                             <button class="btn-edit" data-id="${doc.id}">Editar</button>

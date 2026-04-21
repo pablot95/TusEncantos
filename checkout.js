@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     price: verified.price,
                     image: verified.image,
                     size: item.size,
+                    color: item.color || '',
                     qty: item.qty
                 };
             }
@@ -67,6 +68,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cardIconsEl = document.getElementById('card-icons');
     const paymentNoteEl = document.getElementById('payment-note');
     const WHATSAPP_NUMBER = '5493874819296';
+    const shippingRowEl = document.getElementById('summary-shipping-row');
+    const shippingPriceEl = document.getElementById('summary-shipping-price');
+    const shippingLabelEl = document.getElementById('shipping-label');
+
+    // --- Costos de envío ---
+    const FREE_SHIPPING_THRESHOLD = 150000;
+
+    function getShippingCost(baseTotal) {
+        if (baseTotal >= FREE_SHIPPING_THRESHOLD) return 0;
+        return 'acordar'; // A acordar con el vendedor
+    }
 
     document.querySelectorAll('input[name="payment-method"]').forEach(radio => {
         radio.addEventListener('change', () => {
@@ -111,22 +123,38 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" width="56" height="68">
                 <div class="summary-item-info">
                     <h4>${escapeHtml(item.name)}</h4>
-                    <p class="item-meta">Talle: ${escapeHtml(item.size)} — Cant: ${item.qty}</p>
+                    <p class="item-meta">Talle: ${escapeHtml(item.size)}${item.color ? ' — Color: ' + escapeHtml(item.color) : ''} — Cant: ${item.qty}</p>
                     <p class="item-price">$${subtotal.toLocaleString('es-AR')}</p>
                 </div>
             `;
             summaryItemsEl.appendChild(div);
         });
+
+        let displayTotal = baseTotal;
         if (selectedMethod === 'transfer') {
             const discount = Math.round(baseTotal * 0.20);
-            const finalTotal = baseTotal - discount;
+            displayTotal = baseTotal - discount;
             discountAmountEl.textContent = '-$' + discount.toLocaleString('es-AR');
             discountRow.classList.remove('hidden');
-            summaryTotalEl.textContent = '$' + finalTotal.toLocaleString('es-AR');
         } else {
             discountRow.classList.add('hidden');
-            summaryTotalEl.textContent = '$' + baseTotal.toLocaleString('es-AR');
         }
+
+        // Envío se calcula sobre el subtotal sin descuento
+        const shippingCost = getShippingCost(baseTotal);
+        if (shippingCost === 0) {
+            shippingPriceEl.textContent = '¡GRATIS!';
+            shippingPriceEl.className = 'shipping-free';
+            shippingLabelEl.textContent = 'Envío';
+        } else {
+            shippingPriceEl.textContent = 'A acordar con el vendedor';
+            shippingPriceEl.className = 'shipping-pending';
+            shippingLabelEl.textContent = 'Envío';
+        }
+
+        const finalTotal = displayTotal + (shippingCost === 0 ? 0 : 0);
+        summaryTotalEl.textContent = '$' + finalTotal.toLocaleString('es-AR');
+
         btnPay.disabled = false;
     }
 
@@ -143,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Validación ---
     function validateForm() {
         let valid = true;
-        const required = ['ship-name', 'ship-lastname', 'ship-email', 'ship-phone', 'ship-address'];
+        const required = ['ship-name', 'ship-lastname', 'ship-email', 'ship-phone', 'ship-address', 'ship-city', 'ship-province'];
         required.forEach(id => {
             const el = document.getElementById(id);
             if (!el.value.trim()) {
@@ -202,18 +230,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 const data = doc.data();
-                // Soporte para stock por talle (objeto) o stock global (número, legado)
-                const stockVal = (typeof data.stock === 'object' && data.stock !== null)
-                    ? (data.stock[item.size] ?? 0)
-                    : (data.stock ?? 0);
+                // Soporte para stock anidado (talle+color), por talle, o global (legado)
+                let stockVal = 0;
+                if (typeof data.stock === 'object' && data.stock !== null) {
+                    const sizeVal = data.stock[item.size];
+                    if (typeof sizeVal === 'object' && sizeVal !== null) {
+                        // Stock anidado: talle → { color: n }
+                        stockVal = item.color ? (sizeVal[item.color] ?? 0) : Object.values(sizeVal).reduce((a, b) => a + b, 0);
+                    } else {
+                        stockVal = sizeVal ?? 0;
+                    }
+                } else {
+                    stockVal = data.stock ?? 0;
+                }
+                const stockLabel = item.color ? 'talle ' + item.size + ' / ' + item.color : 'talle ' + item.size;
                 if (stockVal === 0) {
-                    showToast(data.name + ' (talle ' + item.size + ') está sin stock. Eliminalo del carrito para continuar.', 'error');
+                    showToast(data.name + ' (' + stockLabel + ') está sin stock. Eliminalo del carrito para continuar.', 'error');
                     btnPay.disabled = false;
                     btnPay.innerHTML = btnPayOriginalHTML;
                     return;
                 }
                 if (item.qty > stockVal) {
-                    showToast(data.name + ' (talle ' + item.size + '): solo hay ' + stockVal + ' unidades disponibles (tenés ' + item.qty + ')', 'error');
+                    showToast(data.name + ' (' + stockLabel + '): solo hay ' + stockVal + ' unidades disponibles (tenés ' + item.qty + ')', 'error');
                     btnPay.disabled = false;
                     btnPay.innerHTML = btnPayOriginalHTML;
                     return;
@@ -223,6 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     name: data.name,
                     price: data.price,
                     size: item.size,
+                    color: item.color || '',
                     qty: item.qty,
                     image: data.image
                 });
@@ -231,9 +270,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Aplicar descuento por transferencia
             const isTransfer = selectedMethod === 'transfer';
+            const baseTotalBeforeDiscount = freshTotal;
             if (isTransfer) {
                 freshTotal = Math.round(freshTotal * 0.80);
             }
+
+            // Calcular envío sobre subtotal sin descuento
+            const shippingCostRaw = getShippingCost(baseTotalBeforeDiscount);
+            const shippingCost = shippingCostRaw === 0 ? 0 : 0; // A acordar: no suma al total
+            const shippingDisplay = shippingCostRaw === 0 ? 0 : 'acordar';
+            freshTotal += shippingCost;
 
             const shipping = {
                 name: document.getElementById('ship-name').value.trim(),
@@ -241,6 +287,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 email: document.getElementById('ship-email').value.trim(),
                 phone: document.getElementById('ship-phone').value.trim(),
                 address: document.getElementById('ship-address').value.trim(),
+                city: document.getElementById('ship-city').value.trim(),
+                province: document.getElementById('ship-province').value.trim(),
                 message: document.getElementById('ship-message').value.trim()
             };
 
@@ -259,6 +307,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 items: freshItems,
                 shipping: shipping,
                 billing: billing,
+                subtotal: baseTotalBeforeDiscount,
+                shippingCost: shippingDisplay,
                 total: freshTotal,
                 paymentMethod: isTransfer ? 'transfer' : 'mercadopago',
                 status: isTransfer ? 'pending_transfer' : 'pending',
@@ -271,8 +321,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (isTransfer) {
                 // Flujo transferencia: redirigir a WhatsApp con los datos del pedido
-                const itemsList = freshItems.map(i => `• ${i.name} (Talle: ${i.size}) x${i.qty}`).join('%0A');
-                const msg = `Hola! Quiero enviar el comprobante de mi pedido.%0A%0A*Pedido #${docRef.id}*%0A${itemsList}%0A%0A*Total: $${freshTotal.toLocaleString('es-AR')}* (con 20% descuento transferencia)%0A%0ADatos de envío: ${shipping.name} ${shipping.lastname} - ${shipping.address}`;
+                const itemsList = freshItems.map(i => `• ${i.name} (Talle: ${i.size}${i.color ? ', Color: ' + i.color : ''}) x${i.qty}`).join('%0A');
+                const shippingText = shippingCostRaw === 0 ? 'Env%C3%ADo: GRATIS' : 'Env%C3%ADo: A%20acordar%20con%20el%20vendedor';
+                const msg = `Hola! Quiero enviar el comprobante de mi pedido.%0A%0A*Pedido #${docRef.id}*%0A${itemsList}%0A%0A${shippingText}%0A*Total: $${freshTotal.toLocaleString('es-AR')}* (con 20% descuento transferencia)%0A%0ADatos de envío: ${shipping.name} ${shipping.lastname} - ${shipping.address}, ${shipping.city}, ${shipping.province}`;
                 showToast('¡Pedido creado! Redirigiendo a WhatsApp...', 'success');
                 setTimeout(() => {
                     window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
@@ -342,8 +393,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 4000);
     }
 
-    form.querySelectorAll('input, textarea').forEach(el => {
+    form.querySelectorAll('input, textarea, select').forEach(el => {
         el.addEventListener('input', () => el.classList.remove('error'));
+        el.addEventListener('change', () => el.classList.remove('error'));
     });
 
     // --- Manejo de pago exitoso (retorno desde MercadoPago) ---
@@ -354,12 +406,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
                 <h1 style="font-family:'Playfair Display',serif; color:#333; margin-bottom:12px;">¡Gracias por tu compra!</h1>
                 <p style="color:#666; font-size:1.1rem; margin-bottom:8px;">Tu pago fue procesado con éxito.</p>
-                <p style="color:#999; font-size:0.95rem; margin-bottom:32px;" id="email-status">Enviando confirmación por email...</p>
+                <p style="color:#999; font-size:0.95rem; margin-bottom:32px;" id="email-status">Verificando pago...</p>
                 <a href="index.html" style="display:inline-block; background:#F6AFCB; color:#fff; padding:14px 36px; border-radius:30px; text-decoration:none; font-weight:600; font-family:'Lato',sans-serif;">Volver a la tienda</a>
             </div>
         `;
 
         const emailStatusEl = document.getElementById('email-status');
+
+        // ---- Verificar con el servidor que el pago realmente fue aprobado ----
+        // El webhook de MercadoPago escribe el resultado en /payments/{orderId}.json.
+        // Reintentamos hasta 10 veces con 2 s de espera para cubrir la latencia del webhook.
+        let paymentVerified = false;
+        for (let attempt = 0; attempt < 10; attempt++) {
+            try {
+                const checkResp = await fetch('api/check-payment.php?orderId=' + encodeURIComponent(orderId));
+                if (checkResp.ok) {
+                    const checkData = await checkResp.json();
+                    if (checkData.status === 'approved') {
+                        paymentVerified = true;
+                        break;
+                    }
+                    // Si fue rechazado, no tiene sentido seguir esperando
+                    if (checkData.status === 'rejected' || checkData.status === 'cancelled') break;
+                }
+            } catch (_) { /* ignorar errores de red temporales */ }
+            if (attempt < 9) await new Promise(r => setTimeout(r, 2000));
+        }
+
+        if (!paymentVerified) {
+            emailStatusEl.textContent = 'Tu pago está siendo procesado. Recibirás un email de confirmación en breve.';
+            return;
+        }
 
         try {
             // Leer datos guardados en sessionStorage (no requiere auth de Firestore)
@@ -406,22 +483,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const stockUpdates = [];
 
-                // Agrupar cantidades por (productId, talle)
-                const qtyByProductSize = {};
+                // Agrupar cantidades por (productId, talle, color)
+                const qtyByProductSizeColor = {};
                 items.forEach(item => {
                     const pid = item.productId || item.id;
                     const size = item.size;
+                    const color = item.color || '';
                     if (pid && size) {
-                        if (!qtyByProductSize[pid]) qtyByProductSize[pid] = {};
-                        qtyByProductSize[pid][size] = (qtyByProductSize[pid][size] || 0) + item.qty;
+                        if (!qtyByProductSizeColor[pid]) qtyByProductSizeColor[pid] = [];
+                        qtyByProductSizeColor[pid].push({ size, color, qty: item.qty });
                     }
                 });
 
-                // Reducir stock por talle con incremento atómico (campo stock.S, stock.M, etc.)
-                Object.entries(qtyByProductSize).forEach(([productId, sizeQtys]) => {
+                // Reducir stock por talle+color con incremento atómico
+                Object.entries(qtyByProductSizeColor).forEach(([productId, entries]) => {
                     const updates = {};
-                    Object.entries(sizeQtys).forEach(([size, qty]) => {
-                        updates[`stock.${size}`] = firebase.firestore.FieldValue.increment(-qty);
+                    entries.forEach(({ size, color, qty }) => {
+                        if (color) {
+                            // Stock anidado: stock.Talle.Color
+                            updates[`stock.${size}.${color}`] = firebase.firestore.FieldValue.increment(-qty);
+                        } else {
+                            // Stock plano por talle (sin colores)
+                            updates[`stock.${size}`] = firebase.firestore.FieldValue.increment(-qty);
+                        }
                     });
                     stockUpdates.push(
                         db.collection('products').doc(productId).update(updates)

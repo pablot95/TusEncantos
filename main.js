@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Cargar productos desde Firebase ---
     let allProducts = [];
     let activeCategory = 'all';
+    let activeSearch = '';
 
     const productsGrid = document.getElementById('products-grid');
     const productsLoading = document.getElementById('products-loading');
@@ -94,6 +95,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function calcTotalStock(stock) {
+        if (stock == null) return 0;
+        if (typeof stock !== 'object') return stock;
+        let total = 0;
+        Object.values(stock).forEach(v => {
+            if (typeof v === 'object' && v !== null) {
+                Object.values(v).forEach(n => { total += (n || 0); });
+            } else {
+                total += (v || 0);
+            }
+        });
+        return total;
+    }
+
     function renderProducts() {
         if (productsLoading) productsLoading.style.display = 'none';
         productsGrid.querySelectorAll('.product-card').forEach(el => el.remove());
@@ -101,6 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let filtered = allProducts;
         if (activeCategory !== 'all') {
             filtered = filtered.filter(p => p.category === activeCategory);
+        }
+        if (activeSearch) {
+            const q = activeSearch.toLowerCase();
+            filtered = filtered.filter(p => p.name && p.name.toLowerCase().includes(q));
         }
 
         if (filtered.length === 0) {
@@ -129,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="product-tag">${escapeHtml(p.category)}</span>
                         <h3>${escapeHtml(p.name)}</h3>
                         <p class="product-price">$${p.price.toLocaleString('es-AR')}</p>
-                        ${(p.stock != null && p.stock > 0 && p.stock < 5) ? '<span class="low-stock-tag">¡Últimas unidades!</span>' : ''}
+                        ${(() => { const total = calcTotalStock(p.stock); return (total > 0 && total < 5) ? '<span class="low-stock-tag">¡Últimas unidades!</span>' : ''; })()}
                     </div>
                 </a>
             `;
@@ -153,10 +172,34 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear filters
         document.getElementById('filter-clear').addEventListener('click', () => {
             activeCategory = 'all';
+            activeSearch = '';
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) { searchInput.value = ''; }
+            const searchClear = document.getElementById('search-clear');
+            if (searchClear) searchClear.style.display = 'none';
             filterCategoriesList.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             filterCategoriesList.querySelector('[data-category="all"]').classList.add('active');
             renderProducts();
         });
+
+        // Search
+        const searchInput = document.getElementById('search-input');
+        const searchClear = document.getElementById('search-clear');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                activeSearch = searchInput.value.trim();
+                if (searchClear) searchClear.style.display = activeSearch ? '' : 'none';
+                renderProducts();
+            });
+        }
+        if (searchClear) {
+            searchClear.addEventListener('click', () => {
+                activeSearch = '';
+                searchInput.value = '';
+                searchClear.style.display = 'none';
+                renderProducts();
+            });
+        }
     }
 
     loadProducts();
@@ -220,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         add(product) {
-            const existing = this.items.find(i => i.id === product.id && i.size === product.size);
+            const existing = this.items.find(i => i.id === product.id && i.size === product.size && i.color === product.color);
             if (existing) {
                 existing.qty += 1;
             } else {
@@ -256,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <img src="${escapeAttr(item.image)}" alt="${escapeAttr(item.name)}" width="70" height="85">
                         <div class="cart-item-info">
                             <h4>${escapeHtml(item.name)}</h4>
-                            <p class="cart-item-size">Talle: ${escapeHtml(item.size)} — Cant: ${item.qty}</p>
+                            <p class="cart-item-size">Talle: ${escapeHtml(item.size)}${item.color ? ' — Color: ' + escapeHtml(item.color) : ''} — Cant: ${item.qty}</p>
                             <p class="cart-item-price">$${(item.price * item.qty).toLocaleString('es-AR')}</p>
                         </div>
                         <button class="cart-item-remove" data-index="${index}">✕</button>
