@@ -20,6 +20,6 @@ const CATEGORIES = [
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const JEAN_SIZES = ['36', '38', '40', '42', '44', '46'];
 // Colores disponibles para todas las categorías
-const COLORS = ['Beige', 'Rojo', 'Negro', 'Chocolate', 'Crudo', 'Blanco', 'Rosa bb', 'Fucsia', 'Verde militar', 'Verde benetton', 'Verde agua', 'Gris'];
+const COLORS = ['Beige', 'Rojo', 'Negro', 'Chocolate', 'Crudo', 'Blanco', 'Rosa bb', 'Fucsia', 'Verde militar', 'Verde benetton', 'Verde agua', 'Gris', 'Camel'];
 // Alias de compatibilidad
 const SWEATER_COLORS = COLORS;
