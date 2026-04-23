@@ -74,12 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return ['XS', ...SIZES];
     }
 
-    // Construye la grilla de stock. Si hay colores seleccionados → matriz talle×color.
+    // Construye la grilla de stock. Si hay colores seleccionados → matriz talle×color o solo colores.
     function buildStockGrid(sizes, colors, existingStock) {
         const stockGrid = document.getElementById('pf-stock-grid');
         stockGrid.innerHTML = '';
 
-        if (colors && colors.length > 0) {
+        if (colors && colors.length > 0 && sizes && sizes.length > 0) {
             // --- Matriz: filas = talles, columnas = colores ---
             const table = document.createElement('div');
             table.className = 'stock-matrix';
@@ -124,6 +124,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 table.appendChild(row);
             });
+            stockGrid.appendChild(table);
+        } else if (colors && colors.length > 0) {
+            // --- Solo colores (sin talles): una fila de color → número ---
+            const table = document.createElement('div');
+            table.className = 'stock-matrix';
+
+            // Fila de encabezado
+            const headerRow = document.createElement('div');
+            headerRow.className = 'stock-matrix-row stock-matrix-header';
+            colors.forEach(c => {
+                const cell = document.createElement('div');
+                cell.className = 'stock-matrix-cell stock-col-label';
+                cell.textContent = c;
+                headerRow.appendChild(cell);
+            });
+            table.appendChild(headerRow);
+
+            // Fila de datos
+            const dataRow = document.createElement('div');
+            dataRow.className = 'stock-matrix-row';
+            colors.forEach(c => {
+                let val = 0;
+                if (existingStock) {
+                    const sv = existingStock[c];
+                    if (typeof sv === 'number') val = sv;
+                }
+                const cell = document.createElement('div');
+                cell.className = 'stock-matrix-cell';
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.min = '0';
+                input.value = val;
+                input.dataset.color = c;
+                cell.appendChild(input);
+                dataRow.appendChild(cell);
+            });
+            table.appendChild(dataRow);
             stockGrid.appendChild(table);
         } else {
             // --- Lista simple: talle → número ---
@@ -273,18 +310,26 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSizesForCategory('');
     }
 
-    // Lee los valores de la grilla de stock (simple o matriz)
+    // Lee los valores de la grilla de stock (simple, matriz o solo colores)
     function collectStockFromGrid() {
         const stockData = {};
         const colorInputs = document.querySelectorAll('#pf-stock-grid [data-color]');
         if (colorInputs.length > 0) {
-            // Matriz talle×color
-            colorInputs.forEach(input => {
-                const size = input.dataset.size;
-                const color = input.dataset.color;
-                if (!stockData[size]) stockData[size] = {};
-                stockData[size][color] = parseInt(input.value) || 0;
-            });
+            const firstHasSize = colorInputs[0].dataset.size && colorInputs[0].dataset.size !== '';
+            if (firstHasSize) {
+                // Matriz talle×color
+                colorInputs.forEach(input => {
+                    const size = input.dataset.size;
+                    const color = input.dataset.color;
+                    if (!stockData[size]) stockData[size] = {};
+                    stockData[size][color] = parseInt(input.value) || 0;
+                });
+            } else {
+                // Solo colores (sin talles)
+                colorInputs.forEach(input => {
+                    stockData[input.dataset.color] = parseInt(input.value) || 0;
+                });
+            }
         } else {
             // Simple: solo por talle
             document.querySelectorAll('#pf-stock-grid [data-size]').forEach(input => {

@@ -192,6 +192,12 @@
             function getStockForSize(size) {
                 return getStockForSizeColor(size, selectedColor);
             }
+            function getStockForColor(color) {
+                if (!stockIsObject) return stockRaw ?? 0;
+                const val = stockRaw[color];
+                return typeof val === 'number' ? val : 0;
+            }
+            const hasSizes = product.sizes && product.sizes.length > 0;
 
             let totalStock = 0;
             if (!stockIsObject) {
@@ -251,6 +257,10 @@
                 });
             }
             renderSizeButtons();
+            if (!hasSizes) {
+                const sizeSelectorEl = document.querySelector('.size-selector');
+                if (sizeSelectorEl) sizeSelectorEl.style.display = 'none';
+            }
 
             // Colores (para todas las categorías que tengan colores definidos)
             if (product.colors && product.colors.length > 0) {
@@ -304,7 +314,9 @@
             let currentSizeStock = totalStock;
 
             function updateStockForSelectedState() {
-                if (selectedSize) {
+                if (!hasSizes) {
+                    currentSizeStock = selectedColor ? getStockForColor(selectedColor) : totalStock;
+                } else if (selectedSize) {
                     currentSizeStock = getStockForSize(selectedSize);
                 } else {
                     currentSizeStock = totalStock;
@@ -323,14 +335,20 @@
 
             document.getElementById('btn-add-cart').addEventListener('click', () => {
                 if (totalStock === 0) { showToast('Producto sin stock'); return; }
-                if (!selectedSize) { showToast('Seleccioná un talle'); return; }
+                if (hasSizes && !selectedSize) { showToast('Seleccioná un talle'); return; }
                 if (product.colors && product.colors.length > 0 && !selectedColor) {
                     showToast('Seleccioná un color'); return;
                 }
-                const sizeStock = getStockForSize(selectedSize);
-                if (sizeStock === 0) { showToast('Sin stock en talle ' + selectedSize); return; }
+                let availableStock;
+                if (!hasSizes && selectedColor) {
+                    availableStock = getStockForColor(selectedColor);
+                    if (availableStock === 0) { showToast('Sin stock en color ' + selectedColor); return; }
+                } else {
+                    availableStock = getStockForSize(selectedSize);
+                    if (availableStock === 0) { showToast('Sin stock en talle ' + selectedSize); return; }
+                }
                 const qty = parseInt(qtyInput.value) || 1;
-                if (qty > sizeStock) { showToast('Solo hay ' + sizeStock + ' unidades en talle ' + selectedSize); return; }
+                if (qty > availableStock) { showToast('Solo hay ' + availableStock + ' unidades disponibles'); return; }
                 for (let i = 0; i < qty; i++) {
                     cart.add({ ...productData, size: selectedSize, color: selectedColor || '' });
                 }
@@ -338,14 +356,20 @@
 
             document.getElementById('btn-buy-now').addEventListener('click', () => {
                 if (totalStock === 0) { showToast('Producto sin stock'); return; }
-                if (!selectedSize) { showToast('Seleccioná un talle'); return; }
+                if (hasSizes && !selectedSize) { showToast('Seleccioná un talle'); return; }
                 if (product.colors && product.colors.length > 0 && !selectedColor) {
                     showToast('Seleccioná un color'); return;
                 }
-                const sizeStock = getStockForSize(selectedSize);
-                if (sizeStock === 0) { showToast('Sin stock en talle ' + selectedSize); return; }
+                let availableStock;
+                if (!hasSizes && selectedColor) {
+                    availableStock = getStockForColor(selectedColor);
+                    if (availableStock === 0) { showToast('Sin stock en color ' + selectedColor); return; }
+                } else {
+                    availableStock = getStockForSize(selectedSize);
+                    if (availableStock === 0) { showToast('Sin stock en talle ' + selectedSize); return; }
+                }
                 const qty = parseInt(qtyInput.value) || 1;
-                if (qty > sizeStock) { showToast('Solo hay ' + sizeStock + ' unidades en talle ' + selectedSize); return; }
+                if (qty > availableStock) { showToast('Solo hay ' + availableStock + ' unidades disponibles'); return; }
                 for (let i = 0; i < qty; i++) {
                     cart.add({ ...productData, size: selectedSize, color: selectedColor || '' });
                 }
